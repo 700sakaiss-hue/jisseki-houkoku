@@ -26,13 +26,13 @@
   header {
     background: var(--grn-800); color: white; padding: 14px 16px;
     display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   }
   header h1 { font-size: 18px; font-weight: 500; }
   header span { font-size: 13px; opacity: 0.8; }
   .tab-bar {
     display: flex; background: white; border-bottom: 1px solid #ddd;
-    position: sticky; top: 52px; z-index: 99;
+    position: fixed; top: 52px; left: 0; right: 0; z-index: 99;
   }
   .tab-btn {
     flex: 1; padding: 12px 8px; border: none; background: none;
@@ -40,7 +40,7 @@
     border-bottom: 3px solid transparent; transition: all 0.2s;
   }
   .tab-btn.active { color: var(--grn-600); border-bottom-color: var(--grn-600); font-weight: 500; }
-  .page { display: none; padding: 12px; max-width: 600px; margin: 0 auto; }
+  .page { display: none; padding: 12px; padding-top: 109px; max-width: 600px; margin: 0 auto; }
   .page.active { display: block; }
   .card {
     background: white; border-radius: 12px; padding: 14px 16px;
