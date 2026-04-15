@@ -31,16 +31,16 @@
   header h1 { font-size: 18px; font-weight: 500; }
   header span { font-size: 13px; opacity: 0.8; }
   .tab-bar {
-    display: flex; background: white; border-bottom: 1px solid #ddd;
-    position: fixed; top: 52px; left: 0; right: 0; z-index: 99;
+    display: flex; background: var(--grn-800); border-bottom: 2px solid var(--grn-600);
+    position: fixed; top: 0; left: 0; right: 0; z-index: 99;
   }
   .tab-btn {
     flex: 1; padding: 12px 8px; border: none; background: none;
-    font-size: 15px; color: var(--gray-600); cursor: pointer;
+    font-size: 15px; color: rgba(255,255,255,0.6); cursor: pointer;
     border-bottom: 3px solid transparent; transition: all 0.2s;
   }
-  .tab-btn.active { color: var(--grn-600); border-bottom-color: var(--grn-600); font-weight: 500; }
-  .page { display: none; padding: 12px; padding-top: 109px; max-width: 600px; margin: 0 auto; }
+  .tab-btn.active { color: #fff; border-bottom-color: #fff; font-weight: 500; }
+  .page { display: none; padding: 12px; max-width: 600px; margin: 0 auto; }
   .page.active { display: block; }
   .card {
     background: white; border-radius: 12px; padding: 14px 16px;
@@ -323,6 +323,19 @@ try {
 } catch(e) { document.getElementById("firebase-warning").style.display = "block"; }
 
 function todayStr() { return new Date().toISOString().slice(0,10); }
+
+// ヘッダー高さに合わせてタブバー位置とコンテンツ余白を動的調整
+function adjustLayout() {
+  const header = document.querySelector('header');
+  const tabBar = document.querySelector('.tab-bar');
+  const pages  = document.querySelectorAll('.page');
+  const hh = header.offsetHeight;
+  const th = tabBar.offsetHeight;
+  tabBar.style.top = hh + 'px';
+  pages.forEach(p => p.style.paddingTop = (hh + th + 12) + 'px');
+}
+adjustLayout();
+window.addEventListener('resize', adjustLayout);
 document.getElementById("inp-date").value = todayStr();
 document.getElementById("list-date").value = todayStr();
 document.getElementById("header-date").textContent =
