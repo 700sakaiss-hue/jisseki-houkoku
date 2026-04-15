@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<title>点検日報</title>
+<title>稼働報告アプリ</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -223,7 +223,10 @@
 <body>
 
 <header>
-  <h1>点検日報</h1>
+  <div>
+    <div style="font-size:11px;opacity:0.75;letter-spacing:0.08em;margin-bottom:2px;font-weight:700;color:#a8d5b5;">堺総合サービス</div>
+    <h1>稼働報告アプリ</h1>
+  </div>
   <span id="header-date"></span>
 </header>
 
@@ -237,13 +240,12 @@
     ⚠️ Firebase未設定のため、データは保存されません。firebaseConfigを設定してください。
   </div>
   <div class="card">
-    <div class="card-title">基本情報</div>
     <div class="form-group">
       <label>日付<span class="required">必須</span></label>
       <input type="date" id="inp-date">
     </div>
     <div class="form-group">
-      <label>点検者名<span class="required">必須</span></label>
+      <label>担当者<span class="required">必須</span></label>
       <input type="text" id="inp-name" placeholder="例：山田太郎">
     </div>
   </div>
@@ -258,7 +260,7 @@
     <div class="card-title">補足情報</div>
     <div class="form-group">
       <label>明日の点検区<span class="required">必須</span></label>
-      <input type="text" id="inp-tomorrow" placeholder="例：西淀川区／稼働なしの場合は&quot;無し&quot;">
+      <input type="text" id="inp-tomorrow" placeholder="稼働なしの場合は&quot;無し&quot;">
     </div>
     <div class="form-group">
       <label>備考（任意）</label>
