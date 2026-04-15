@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>点検日報</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --blue-50: #E6F1FB; --blue-100: #B5D4F4; --blue-200: #85B7EB;
+    --blue-400: #378ADD; --blue-600: #185FA5; --blue-800: #0C447C; --blue-900: #042C53;
+    --gray-50: #F1EFE8; --gray-100: #D3D1C7; --gray-200: #B4B2A9;
+    --gray-400: #888780; --gray-600: #5F5E5A; --gray-800: #444441;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif;
+    font-size: 16px; background: #f0f4f8; color: #1a1a1a; min-height: 100vh;
+  }
+  header {
+    background: var(--blue-800); color: white; padding: 14px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-size: 18px; font-weight: 500; }
+  header span { font-size: 13px; opacity: 0.8; }
+  .tab-bar {
+    display: flex; background: white; border-bottom: 1px solid #ddd;
+    position: sticky; top: 52px; z-index: 99;
+  }
+  .tab-btn {
+    flex: 1; padding: 12px 8px; border: none; background: none;
+    font-size: 15px; color: var(--gray-600); cursor: pointer;
+    border-bottom: 3px solid transparent; transition: all 0.2s;
+  }
+  .tab-btn.active { color: var(--blue-600); border-bottom-color: var(--blue-600); font-weight: 500; }
+  .page { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .page.active { display: block; }
+  .card {
+    background: white; border-radius: 12px; padding: 20px;
+    margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .card-title {
+    font-size: 14px; font-weight: 500; color: var(--blue-800);
+    margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--blue-50);
+  }
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 14px; color: var(--gray-600); margin-bottom: 6px; font-weight: 500; }
+  label .required, .required { color: #e24b4a; margin-left: 4px; font-size: 12px; }
+  input[type="text"], input[type="date"], textarea {
+    width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 16px; background: white; -webkit-appearance: none; transition: border 0.2s;
+  }
+  input[type="text"]:focus, input[type="date"]:focus, textarea:focus {
+    outline: none; border-color: var(--blue-400); box-shadow: 0 0 0 3px rgba(55,138,221,0.15);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .area-block {
+    border: 1px solid #d8e8f6; border-radius: 10px; padding: 14px;
+    margin-bottom: 12px; background: #f6faff;
+  }
+  .area-block-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .area-block-label {
+    font-size: 13px; font-weight: 500; color: var(--blue-600);
+    background: var(--blue-50); padding: 3px 10px; border-radius: 20px;
+  }
+  .btn-remove-area {
+    width: 28px; height: 28px; border-radius: 50%; border: 1px solid #f0b0b0;
+    background: white; color: #e24b4a; font-size: 18px; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .btn-remove-area:active { background: #fef0f0; }
+
+  .count-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .count-item label { font-size: 13px; }
+  .count-input-wrap {
+    display: flex; align-items: center; border: 1px solid #ddd;
+    border-radius: 8px; overflow: hidden; background: white;
+  }
+  .count-input-wrap:focus-within { border-color: var(--blue-400); box-shadow: 0 0 0 3px rgba(55,138,221,0.15); }
+  .count-btn {
+    width: 44px; height: 48px; border: none; background: var(--gray-50);
+    font-size: 22px; color: var(--blue-600); cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .count-btn:active { background: var(--blue-50); }
+  .count-input {
+    flex: 1; border: none !important; box-shadow: none !important;
+    text-align: center; font-size: 20px; font-weight: 500;
+    padding: 0 !important; width: 100%; color: var(--blue-800);
+  }
+  .btn-add-area {
+    width: 100%; padding: 12px; border: 2px dashed var(--blue-200);
+    background: var(--blue-50); color: var(--blue-600); border-radius: 10px;
+    font-size: 15px; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-add-area:active { background: var(--blue-100); }
+
+  .btn-submit {
+    width: 100%; padding: 16px; background: var(--blue-600); color: white;
+    border: none; border-radius: 10px; font-size: 17px; font-weight: 500;
+    cursor: pointer; margin-top: 4px;
+  }
+  .btn-submit:active { background: var(--blue-800); }
+  .btn-submit:disabled { background: var(--gray-200); cursor: not-allowed; }
+
+  .date-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .date-nav input[type="date"] { flex: 1; padding: 10px 12px; font-size: 16px; }
+  .date-nav button {
+    padding: 10px 14px; border: 1px solid #ddd; background: white;
+    border-radius: 8px; font-size: 15px; cursor: pointer; color: var(--blue-600);
+  }
+  .summary-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 16px; }
+  .summary-card { background: var(--blue-50); border-radius: 8px; padding: 10px 8px; text-align: center; }
+  .summary-card .s-label { font-size: 11px; color: var(--blue-600); margin-bottom: 4px; }
+  .summary-card .s-num { font-size: 22px; font-weight: 500; color: var(--blue-800); }
+
+  .record-item {
+    background: white; border-radius: 10px; padding: 14px 16px;
+    margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    border-left: 4px solid var(--blue-400);
+  }
+  .record-header {
+    display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;
+  }
+  .record-name { font-size: 16px; font-weight: 500; color: var(--blue-800); }
+  .record-actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 8px; }
+  .btn-edit, .btn-del {
+    padding: 6px 12px; border-radius: 6px; font-size: 13px;
+    border: 1px solid; cursor: pointer; background: white;
+  }
+  .btn-edit { color: var(--blue-600); border-color: var(--blue-200); }
+  .btn-del { color: #e24b4a; border-color: #f0b0b0; }
+  .area-section { margin-bottom: 8px; }
+  .area-tag {
+    display: inline-block; background: var(--blue-50); color: var(--blue-800);
+    font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 20px; margin-bottom: 6px;
+  }
+  .counts-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .count-badge { background: #f1f5fa; border-radius: 6px; padding: 4px 10px; font-size: 13px; }
+  .count-badge span { color: var(--blue-800); font-weight: 500; margin-left: 4px; }
+  .area-divider { border: none; border-top: 1px dashed #dde8f5; margin: 8px 0; }
+  .record-note { font-size: 13px; color: var(--gray-600); margin-top: 6px; }
+  .record-tomorrow { font-size: 13px; color: var(--gray-400); margin-top: 2px; }
+  .empty-msg { text-align: center; color: var(--gray-400); padding: 40px 20px; font-size: 15px; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 200; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 16px 16px 0 0; padding: 20px 20px 32px;
+    width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-title {
+    font-size: 16px; font-weight: 500; margin-bottom: 16px; color: var(--blue-800);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-close { font-size: 22px; background: none; border: none; cursor: pointer; color: var(--gray-400); }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #1a1a1a; color: white; padding: 12px 20px; border-radius: 8px;
+    font-size: 14px; z-index: 300; opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .loading { text-align: center; color: var(--gray-400); padding: 20px; font-size: 14px; }
+  .firebase-warning {
+    background: #fff8e6; border: 1px solid #f5c842; border-radius: 8px;
+    padding: 12px 14px; font-size: 13px; color: #8a6000; margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>点検日報</h1>
+  <span id="header-date"></span>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('input')">入力</button>
+  <button class="tab-btn" onclick="switchTab('list')">一覧・集計</button>
+</div>
+
+<div id="page-input" class="page active">
+  <div id="firebase-warning" class="firebase-warning" style="display:none">
+    ⚠️ Firebase未設定のため、データは保存されません。firebaseConfigを設定してください。
+  </div>
+  <div class="card">
+    <div class="card-title">基本情報</div>
+    <div class="form-group">
+      <label>日付<span class="required">必須</span></label>
+      <input type="date" id="inp-date">
+    </div>
+    <div class="form-group">
+      <label>点検者名<span class="required">必須</span></label>
+      <input type="text" id="inp-name" placeholder="例：山田太郎">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">点検区・実施件数<span class="required">必須</span></div>
+    <div id="area-blocks"></div>
+    <button class="btn-add-area" onclick="addAreaBlock('area-blocks','inp')">＋ 点検区を追加</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">補足情報</div>
+    <div class="form-group">
+      <label>明日の点検区<span class="required">必須</span></label>
+      <input type="text" id="inp-tomorrow" placeholder="例：西淀川区／稼働なしの場合は&quot;無し&quot;">
+    </div>
+    <div class="form-group">
+      <label>備考（任意）</label>
+      <textarea id="inp-note" placeholder="特記事項など"></textarea>
+    </div>
+  </div>
+
+  <button class="btn-submit" id="submit-btn" onclick="submitRecord()">送信する</button>
+  <div style="height:24px"></div>
+</div>
+
+<div id="page-list" class="page">
+  <div class="date-nav">
+    <input type="date" id="list-date" onchange="loadList()">
+    <button onclick="goToday()">今日</button>
+  </div>
+  <div class="summary-grid">
+    <div class="summary-card"><div class="s-label">近接</div><div class="s-num" id="sum-kinsetsu">0</div></div>
+    <div class="summary-card"><div class="s-label">遠方</div><div class="s-num" id="sum-enpo">0</div></div>
+    <div class="summary-card"><div class="s-label">詳細1</div><div class="s-num" id="sum-detail1">0</div></div>
+    <div class="summary-card"><div class="s-label">詳細2</div><div class="s-num" id="sum-detail2">0</div></div>
+  </div>
+  <div id="list-container"><div class="loading">読み込み中...</div></div>
+</div>
+
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title">
+      記録を編集
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="edit-area-blocks"></div>
+    <button class="btn-add-area" onclick="addAreaBlock('edit-area-blocks','edit')" style="margin-bottom:16px">＋ 点検区を追加</button>
+    <div class="form-group"><label>明日の点検区<span class="required">必須</span></label><input type="text" id="edit-tomorrow"></div>
+    <div class="form-group"><label>備考</label><textarea id="edit-note"></textarea></div>
+    <button class="btn-submit" onclick="saveEdit()">保存する</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, push, set, remove, onValue, query, orderByChild, equalTo }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA4bnxODVw2LDyi2DT1uaxfHq4jcWh5uew",
+  authDomain: "jisseki-houkoku.firebaseapp.com",
+  databaseURL: "https://jisseki-houkoku-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "jisseki-houkoku",
+  storageBucket: "jisseki-houkoku.firebasestorage.app",
+  messagingSenderId: "558192827490",
+  appId: "1:558192827490:web:0dd1170661166e5f45c53b"
+};
+
+let db = null, editingKey = null, currentListener = null;
+
+try {
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY") {
+    document.getElementById("firebase-warning").style.display = "block";
+  } else {
+    db = getDatabase(initializeApp(firebaseConfig));
+  }
+} catch(e) { document.getElementById("firebase-warning").style.display = "block"; }
+
+function todayStr() { return new Date().toISOString().slice(0,10); }
+document.getElementById("inp-date").value = todayStr();
+document.getElementById("list-date").value = todayStr();
+document.getElementById("header-date").textContent =
+  new Date().toLocaleDateString("ja-JP", {month:"short",day:"numeric",weekday:"short"});
+
+window.goToday = () => { document.getElementById("list-date").value = todayStr(); loadList(); };
+
+// ---- タブ ----
+window.switchTab = function(tab) {
+  document.querySelectorAll(".tab-btn").forEach((b,i) => b.classList.toggle("active",(i===0)===(tab==="input")));
+  document.getElementById("page-input").classList.toggle("active", tab==="input");
+  document.getElementById("page-list").classList.toggle("active", tab==="list");
+  if (tab==="list") loadList();
+};
+
+// ---- 点検区ブロック ----
+let blockSeq = 0;
+
+function makeBlockHtml(uid, idx, areaVal, k, e, d1, d2, removable) {
+  const rmBtn = removable
+    ? `<button class="btn-remove-area" onclick="removeBlock('${uid}')">×</button>`
+    : "";
+  return `
+    <div class="area-block" id="block-${uid}">
+      <div class="area-block-header">
+        <span class="area-block-label">点検区 ${idx+1}</span>
+        ${rmBtn}
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <input type="text" id="aname-${uid}" placeholder="例：都島区" value="${esc(areaVal)}">
+      </div>
+      <div class="count-grid">
+        ${ci("近接点検",`ck-${uid}`,k)}
+        ${ci("遠方点検",`ce-${uid}`,e)}
+        ${ci("詳細点検1",`cd1-${uid}`,d1)}
+        ${ci("詳細点検2",`cd2-${uid}`,d2)}
+      </div>
+    </div>`;
+}
+
+function ci(label, id, val) {
+  return `<div class="count-item">
+    <label style="font-size:13px">${label}</label>
+    <div class="count-input-wrap">
+      <button class="count-btn" onclick="step('${id}',-1)">−</button>
+      <input type="number" class="count-input" id="${id}" value="${val}" min="0" inputmode="numeric">
+      <button class="count-btn" onclick="step('${id}',1)">＋</button>
+    </div>
+  </div>`;
+}
+
+window.step = function(id, d) {
+  const el = document.getElementById(id);
+  if (el) el.value = Math.max(0, (parseInt(el.value)||0) + d);
+};
+
+window.addAreaBlock = function(containerId, prefix) {
+  const container = document.getElementById(containerId);
+  const idx = container.querySelectorAll(".area-block").length;
+  const uid = `${prefix}-${++blockSeq}`;
+  container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, idx, "", 0,0,0,0, idx>0));
+};
+
+window.removeBlock = function(uid) {
+  const block = document.getElementById("block-"+uid);
+  if (!block) return;
+  const container = block.parentElement;
+  block.remove();
+  container.querySelectorAll(".area-block-label").forEach((el,i) => el.textContent = `点検区 ${i+1}`);
+};
+
+function collectBlocks(containerId) {
+  return Array.from(document.querySelectorAll(`#${containerId} .area-block`)).map(b => {
+    const uid = b.id.replace("block-","");
+    return {
+      areaName: (document.getElementById(`aname-${uid}`)?.value||"").trim(),
+      kinsetsu: parseInt(document.getElementById(`ck-${uid}`)?.value)||0,
+      enpo:     parseInt(document.getElementById(`ce-${uid}`)?.value)||0,
+      detail1:  parseInt(document.getElementById(`cd1-${uid}`)?.value)||0,
+      detail2:  parseInt(document.getElementById(`cd2-${uid}`)?.value)||0,
+    };
+  });
+}
+
+// 初期ブロック（削除ボタンなし）
+(function() {
+  const uid = `inp-${++blockSeq}`;
+  document.getElementById("area-blocks").insertAdjacentHTML(
+    "beforeend", makeBlockHtml(uid, 0, "", 0,0,0,0, false));
+})();
+
+// ---- 送信 ----
+window.submitRecord = async function() {
+  const date = document.getElementById("inp-date").value;
+  const name = document.getElementById("inp-name").value.trim();
+  if (!date||!name) { showToast("日付と点検者名は必須です"); return; }
+  const areas = collectBlocks("area-blocks");
+  if (!areas.length || areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
+  const tomorrow = document.getElementById("inp-tomorrow").value.trim();
+  if (!tomorrow) { showToast("明日の点検区を入力してください"); return; }
+
+  if (!db) { showToast("Firebase未設定のため保存できません"); return; }
+  const btn = document.getElementById("submit-btn");
+  btn.disabled=true; btn.textContent="送信中...";
+  try {
+    await push(ref(db,"records"), {
+      date, name, areas,
+      note:     document.getElementById("inp-note").value.trim(),
+      tomorrow,
+      updatedAt: Date.now()
+    });
+    showToast("送信しました！");
+    // リセット
+    const c = document.getElementById("area-blocks");
+    c.innerHTML = "";
+    const uid = `inp-${++blockSeq}`;
+    c.insertAdjacentHTML("beforeend", makeBlockHtml(uid,0,"",0,0,0,0,false));
+    document.getElementById("inp-note").value = "";
+    document.getElementById("inp-tomorrow").value = "";
+    document.getElementById("list-date").value = date;
+    switchTab("list");
+  } catch(e) { showToast("送信エラー: "+e.message); }
+  btn.disabled=false; btn.textContent="送信する";
+};
+
+// ---- 一覧 ----
+window.loadList = function() {
+  const date = document.getElementById("list-date").value;
+  if (!date) return;
+  const container = document.getElementById("list-container");
+  container.innerHTML = '<div class="loading">読み込み中...</div>';
+  if (!db) { container.innerHTML='<div class="empty-msg">Firebase未設定</div>'; return; }
+  if (currentListener) currentListener();
+  const q = query(ref(db,"records"), orderByChild("date"), equalTo(date));
+  currentListener = onValue(q, snap => {
+    const items = [];
+    snap.forEach(c => items.push({key:c.key,...c.val()}));
+    items.sort((a,b)=>a.updatedAt-b.updatedAt);
+    renderList(items);
+  });
+};
+
+function normAreas(r) {
+  if (r.areas && Array.isArray(r.areas)) return r.areas;
+  return [{areaName:r.area||"", kinsetsu:r.kinsetsu||0, enpo:r.enpo||0, detail1:r.detail1||0, detail2:r.detail2||0}];
+}
+
+function renderList(items) {
+  let sK=0,sE=0,sD1=0,sD2=0;
+  items.forEach(r => normAreas(r).forEach(a=>{sK+=a.kinsetsu||0;sE+=a.enpo||0;sD1+=a.detail1||0;sD2+=a.detail2||0;}));
+  document.getElementById("sum-kinsetsu").textContent=sK;
+  document.getElementById("sum-enpo").textContent=sE;
+  document.getElementById("sum-detail1").textContent=sD1;
+  document.getElementById("sum-detail2").textContent=sD2;
+
+  const container = document.getElementById("list-container");
+  if (!items.length) { container.innerHTML='<div class="empty-msg">この日のデータはありません</div>'; return; }
+  container.innerHTML = items.map(r => {
+    const areas = normAreas(r);
+    const aHtml = areas.map((a,i) => `
+      ${i>0?'<hr class="area-divider">':''}
+      <div class="area-section">
+        <span class="area-tag">${esc(a.areaName)}</span>
+        <div class="counts-row">
+          <div class="count-badge">近接<span>${a.kinsetsu||0}</span></div>
+          <div class="count-badge">遠方<span>${a.enpo||0}</span></div>
+          <div class="count-badge">詳細1<span>${a.detail1||0}</span></div>
+          <div class="count-badge">詳細2<span>${a.detail2||0}</span></div>
+        </div>
+      </div>`).join("");
+    return `<div class="record-item">
+      <div class="record-header">
+        <div class="record-name">${esc(r.name)}</div>
+        <div class="record-actions">
+          <button class="btn-edit" onclick="openEdit('${r.key}')">編集</button>
+          <button class="btn-del" onclick="deleteRecord('${r.key}')">削除</button>
+        </div>
+      </div>
+      ${aHtml}
+      ${r.note?`<div class="record-note">📝 ${esc(r.note)}</div>`:""}
+      ${r.tomorrow?`<div class="record-tomorrow">明日: ${esc(r.tomorrow)}</div>`:""}
+    </div>`;
+  }).join("");
+}
+
+// ---- 編集 ----
+window.openEdit = function(key) {
+  editingKey = key;
+  onValue(ref(db,"records/"+key), snap => {
+    const r = snap.val(); if (!r) return;
+    const container = document.getElementById("edit-area-blocks");
+    container.innerHTML = "";
+    normAreas(r).forEach((a,i) => {
+      const uid = `edit-${++blockSeq}`;
+      container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, i, a.areaName, a.kinsetsu||0, a.enpo||0, a.detail1||0, a.detail2||0, i>0));
+    });
+    document.getElementById("edit-note").value = r.note||"";
+    document.getElementById("edit-tomorrow").value = r.tomorrow||"";
+  }, {onlyOnce:true});
+  document.getElementById("edit-modal").classList.add("open");
+};
+
+window.closeModal = function() {
+  document.getElementById("edit-modal").classList.remove("open");
+  editingKey = null;
+};
+
+window.saveEdit = async function() {
+  if (!editingKey||!db) return;
+  const areas = collectBlocks("edit-area-blocks");
+  if (areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
+  try {
+    const snap = await new Promise(res=>onValue(ref(db,"records/"+editingKey),res,{onlyOnce:true}));
+    await set(ref(db,"records/"+editingKey), {
+      ...snap.val(), areas,
+      note:     document.getElementById("edit-note").value.trim(),
+      tomorrow: document.getElementById("edit-tomorrow").value.trim(),
+      updatedAt: Date.now()
+    });
+    showToast("更新しました");
+    closeModal();
+  } catch(e) { showToast("更新エラー: "+e.message); }
+};
+
+window.deleteRecord = async function(key) {
+  if (!confirm("この記録を削除しますか？")) return;
+  try { await remove(ref(db,"records/"+key)); showToast("削除しました"); }
+  catch(e) { showToast("削除エラー: "+e.message); }
+};
+
+function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function showToast(msg) {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2500);
+}
+</script>
+</body>
+</html>
