@@ -108,6 +108,14 @@
   .summary-table td:first-child { text-align: left; font-weight: 500; color: var(--blue-800); padding-left: 10px; }
   .summary-table tr:last-child td { border-bottom: none; font-weight: 500; background: #f0f6ff; }
   .summary-table .zero { color: var(--gray-200); }
+  .tomorrow-list {
+    border: 1px solid var(--blue-100); border-radius: 0 0 8px 8px;
+    background: white; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .tomorrow-tag {
+    background: #eef6ff; color: var(--blue-800); border: 1px solid var(--blue-100);
+    font-size: 14px; font-weight: 500; padding: 5px 14px; border-radius: 20px;
+  }
   .btn-add-area {
     width: 100%; padding: 12px; border: 2px dashed var(--blue-200);
     background: var(--blue-50); color: var(--blue-600); border-radius: 10px;
@@ -462,6 +470,20 @@ function renderList(items) {
       <td>${v.kinsetsu+v.enpo+v.detail1+v.detail2}</td>
     </tr>`).join("");
 
+  // 次回点検区（重複除去・区名のみ）
+  const tomorrowAreas = [...new Set(
+    items.map(r => (r.tomorrow||"").trim()).filter(t => t)
+  )];
+  const tomorrowHtml = `
+    <div class="area-summary">
+      <div class="area-summary-title">次回点検区</div>
+      <div class="tomorrow-list">
+        ${tomorrowAreas.length
+          ? tomorrowAreas.map(t => `<span class="tomorrow-tag">${esc(t)}</span>`).join("")
+          : '<span style="font-size:13px;color:var(--gray-400)">データなし</span>'}
+      </div>
+    </div>`;
+
   const summaryHtml = `
     <div class="area-summary">
       <div class="area-summary-title">区別集計</div>
@@ -478,7 +500,8 @@ function renderList(items) {
           </tr>
         </tbody>
       </table>
-    </div>`;
+    </div>
+    ${tomorrowHtml}`;
 
   // 個人レコード一覧
   const recordsHtml = items.map(r => {
