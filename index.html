@@ -33,17 +33,17 @@
     border-bottom: 3px solid transparent; transition: all 0.2s;
   }
   .tab-btn.active { color: var(--grn-600); border-bottom-color: var(--grn-600); font-weight: 500; }
-  .page { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+  .page { display: none; padding: 12px; max-width: 600px; margin: 0 auto; }
   .page.active { display: block; }
   .card {
-    background: white; border-radius: 12px; padding: 20px;
-    margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    background: white; border-radius: 12px; padding: 14px 16px;
+    margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   }
   .card-title {
     font-size: 14px; font-weight: 500; color: var(--grn-800);
-    margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--grn-50);
+    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--grn-50);
   }
-  .form-group { margin-bottom: 16px; }
+  .form-group { margin-bottom: 12px; }
   label { display: block; font-size: 14px; color: var(--gray-600); margin-bottom: 6px; font-weight: 500; }
   label .required, .required { color: #e24b4a; margin-left: 4px; font-size: 12px; }
   input[type="text"], input[type="date"], textarea {
@@ -60,7 +60,7 @@
     margin-bottom: 12px; background: #f4faf6;
   }
   .area-block-header {
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
   }
   .area-block-label {
     font-size: 13px; font-weight: 500; color: var(--grn-600);
@@ -73,11 +73,11 @@
   }
   .btn-remove-area:active { background: #fef0f0; }
 
-  .count-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .count-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .count-item label { font-size: 13px; }
   .count-input {
-    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;
-    font-size: 20px; font-weight: 500; text-align: center; color: var(--grn-800);
+    width: 100%; padding: 6px 4px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 18px; font-weight: 500; text-align: center; color: var(--grn-800);
     background: white; -webkit-appearance: none;
   }
   .count-input:focus { outline: none; border-color: var(--grn-400); box-shadow: 0 0 0 3px rgba(58,158,95,0.15); }
@@ -158,14 +158,18 @@
   }
   .btn-edit { color: var(--grn-600); border-color: var(--grn-200); }
   .btn-del { color: #e24b4a; border-color: #f0b0b0; }
-  .area-section { margin-bottom: 8px; }
+  .area-section { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
   .area-tag {
     display: inline-block; background: var(--grn-50); color: var(--grn-800);
-    font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 20px; margin-bottom: 6px;
+    font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 20px; flex-shrink: 0;
   }
-  .counts-row { display: flex; gap: 6px; flex-wrap: wrap; }
-  .count-badge { background: #f0f7f2; border-radius: 6px; padding: 4px 10px; font-size: 13px; }
-  .count-badge span { color: var(--grn-800); font-weight: 500; margin-left: 4px; }
+  .counts-row { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+  .count-badge {
+    background: #f0f7f2; border-radius: 5px; padding: 3px 7px; font-size: 12px;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .count-badge .cb-label { color: var(--gray-600); }
+  .count-badge .cb-val { color: var(--grn-800); font-weight: 500; }
   .area-divider { border: none; border-top: 1px dashed #c8e0cf; margin: 8px 0; }
   .record-note {
     font-size: 13px; color: #5a4000; margin-top: 8px;
@@ -353,8 +357,10 @@ function makeBlockHtml(uid, idx, areaVal, k, e, d1, d2, removable) {
 
 function ci(label, id, val) {
   return `<div class="count-item">
-    <label style="font-size:13px">${label}</label>
-    <input type="number" class="count-input" id="${id}" value="${val}" min="0" inputmode="numeric" placeholder="0">
+    <label style="font-size:12px;margin-bottom:3px">${label}</label>
+    <input type="number" class="count-input" id="${id}" value="${val}" min="0" inputmode="numeric"
+      onfocus="if(this.value==='0')this.value=''"
+      onblur="if(this.value==='')this.value='0'">
   </div>`;
 }
 
@@ -526,10 +532,10 @@ function renderList(items) {
       <div class="area-section">
         <span class="area-tag">${esc(a.areaName)}</span>
         <div class="counts-row">
-          <div class="count-badge">近接<span>${a.kinsetsu||0}</span></div>
-          <div class="count-badge">遠方<span>${a.enpo||0}</span></div>
-          <div class="count-badge">詳細1<span>${a.detail1||0}</span></div>
-          <div class="count-badge">詳細2<span>${a.detail2||0}</span></div>
+          <div class="count-badge"><span class="cb-label">近接</span><span class="cb-val">${a.kinsetsu||0}</span></div>
+          <div class="count-badge"><span class="cb-label">遠方</span><span class="cb-val">${a.enpo||0}</span></div>
+          <div class="count-badge"><span class="cb-label">詳細1</span><span class="cb-val">${a.detail1||0}</span></div>
+          <div class="count-badge"><span class="cb-label">詳細2</span><span class="cb-val">${a.detail2||0}</span></div>
         </div>
       </div>`).join("");
     return `<div class="record-item">
@@ -645,6 +651,7 @@ window.exportExcel = function() {
     const rowIdx = AREA_ROW_MAP[areaName];
     if (!rowIdx) return;
     const setCell = (col, val) => {
+      if (!val) return;
       const addr = XLSX.utils.encode_cell({r: rowIdx-1, c: col});
       if (!ws[addr]) ws[addr] = {};
       ws[addr].t = 'n'; ws[addr].v = val; ws[addr].w = String(val);
@@ -661,7 +668,7 @@ window.exportExcel = function() {
   }
 
   const filename = `稼働実績_${dateVal.replace(/-/g,"")}.xlsx`;
-  XLSX.writeFile(wb, filename);
+  XLSX.writeFile(wb, filename, {bookSST:true, cellStyles:true});
   showToast(`${filename} をダウンロードしました`);
 };
 
