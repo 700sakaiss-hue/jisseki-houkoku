@@ -266,7 +266,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, set, remove, onValue, query, orderByChild, equalTo }
+import { getDatabase, ref, push, set, remove, onValue }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -414,10 +414,13 @@ window.loadList = function() {
   container.innerHTML = '<div class="loading">読み込み中...</div>';
   if (!db) { container.innerHTML='<div class="empty-msg">Firebase未設定</div>'; return; }
   if (currentListener) currentListener();
-  const q = query(ref(db,"records"), orderByChild("date"), equalTo(date));
-  currentListener = onValue(q, snap => {
+  // orderByChildはインデックス設定が必要なため、全件取得してJS側でフィルタ
+  currentListener = onValue(ref(db,"records"), snap => {
     const items = [];
-    snap.forEach(c => items.push({key:c.key,...c.val()}));
+    snap.forEach(c => {
+      const v = c.val();
+      if (v.date === date) items.push({key:c.key,...v});
+    });
     items.sort((a,b)=>a.updatedAt-b.updatedAt);
     renderList(items);
   });
