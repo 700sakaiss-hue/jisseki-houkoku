@@ -524,10 +524,15 @@ function renderList(items) {
       <td>${v.kinsetsu+v.enpo+v.detail1+v.detail2}</td>
     </tr>`).join("");
 
-  // 次回点検区（重複除去・区名のみ）
-  const tomorrowAreas = [...new Set(
-    items.map(r => (r.tomorrow||"").trim()).filter(t => t && !["無し","なし","ナシ","無","なし"].includes(t) && !/^無し?$/.test(t))
-  )];
+  // 次回点検区（重複除去・AREA_ORDER順）
+  const tomorrowSet = new Set(
+    items.map(r => (r.tomorrow||"").trim())
+         .filter(t => t && !["無し","なし","ナシ","無"].includes(t) && !/^無し?$/.test(t))
+  );
+  const tomorrowAreas = [
+    ...AREA_ORDER.filter(k => tomorrowSet.has(k)),
+    ...[...tomorrowSet].filter(k => !AREA_ORDER.includes(k))
+  ];
   const tomorrowHtml = `
     <div class="area-summary">
       <div class="area-summary-title">次回点検区</div>
