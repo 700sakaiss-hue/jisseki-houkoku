@@ -207,6 +207,26 @@
   }
   .toast.show { opacity: 1; }
   .loading { text-align: center; color: var(--gray-400); padding: 20px; font-size: 14px; }
+  /* ログイン画面 */
+  #login-screen { display:none; min-height:100vh; align-items:center; justify-content:center; flex-direction:column; padding:2rem; background:#f0f5f2; }
+  #login-screen.active { display:flex; }
+  .login-card { background:white; border-radius:16px; padding:2rem; width:100%; max-width:360px; box-shadow:0 2px 12px rgba(0,0,0,0.1); }
+  .login-logo { font-size:13px; color:var(--gray-400); text-align:center; margin-bottom:8px; }
+  .login-title { font-size:22px; font-weight:500; color:var(--grn-800); text-align:center; margin-bottom:2rem; }
+  .login-field { margin-bottom:14px; }
+  .login-field label { display:block; font-size:13px; color:var(--gray-600); margin-bottom:6px; font-weight:500; }
+  .login-field input { width:100%; padding:12px 14px; border:1px solid #ddd; border-radius:8px; font-size:16px; -webkit-appearance:none; }
+  .login-field input:focus { outline:none; border-color:var(--grn-400); box-shadow:0 0 0 3px rgba(58,158,95,0.15); }
+  .btn-login { width:100%; padding:14px; background:var(--grn-600); color:white; border:none; border-radius:8px; font-size:16px; font-weight:500; cursor:pointer; margin-top:8px; }
+  .btn-login:active { background:var(--grn-800); }
+  .login-error { font-size:13px; color:#e24b4a; text-align:center; margin-top:10px; min-height:18px; }
+  /* 会社バッジ */
+  .company-badge { font-size:11px; background:rgba(255,255,255,0.2); border-radius:10px; padding:2px 8px; margin-left:8px; }
+  /* ログアウトボタン */
+  .btn-logout { font-size:12px; color:rgba(255,255,255,0.8); background:none; border:1px solid rgba(255,255,255,0.3); border-radius:6px; padding:4px 10px; cursor:pointer; }
+  /* 管理者専用要素 */
+  .admin-only { display:none; }
+
   .btn-export {
     width: 100%; padding: 13px; background: white; color: var(--grn-600);
     border: 2px solid var(--grn-400); border-radius: 10px; font-size: 15px;
@@ -222,12 +242,36 @@
 </head>
 <body>
 
-<header>
-  <div>
-    <div style="font-size:11px;opacity:0.75;letter-spacing:0.08em;margin-bottom:2px;font-weight:700;color:#a8d5b5;">堺総合サービス</div>
-    <h1>稼働報告アプリ</h1>
+<!-- ログイン画面 -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">堺総合サービス</div>
+    <div class="login-title">稼働報告アプリ</div>
+    <div class="login-field">
+      <label>メールアドレス</label>
+      <input type="email" id="login-email" placeholder="example@email.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>パスワード</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">ログイン</button>
+    <div class="login-error" id="login-error"></div>
   </div>
-  <span id="header-date"></span>
+</div>
+
+<header>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div>
+      <div style="font-size:11px;opacity:0.75;letter-spacing:0.08em;margin-bottom:2px;font-weight:700;color:#a8d5b5;">堺総合サービス</div>
+      <h1>稼働報告アプリ</h1>
+    </div>
+    <span id="company-badge" class="company-badge"></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span id="header-date"></span>
+    <button class="btn-logout" onclick="doLogout()">ログアウト</button>
+  </div>
 </header>
 
 <div class="tab-bar">
@@ -278,7 +322,7 @@
     <button onclick="goToday()">今日</button>
   </div>
   <div id="list-container"><div class="loading">読み込み中...</div></div>
-  <button class="btn-export" id="export-btn" onclick="exportExcel()" disabled>Excel様式にエクスポート</button>
+  <button class="btn-export admin-only" id="export-btn" onclick="exportExcel()" disabled>Excel様式にエクスポート</button>
 </div>
 
 <div class="modal-overlay" id="edit-modal">
@@ -301,6 +345,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, push, set, remove, onValue }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA4bnxODVw2LDyi2DT1uaxfHq4jcWh5uew",
@@ -312,15 +358,67 @@ const firebaseConfig = {
   appId: "1:558192827490:web:0dd1170661166e5f45c53b"
 };
 
-let db = null, editingKey = null, currentListener = null;
+let db = null, auth = null, editingKey = null, currentListener = null;
+let currentUser = null;   // { uid, email, companyId, companyName, isAdmin }
+
+// ★会社マスター：協力会社が増えたらここに追記するだけ★
+// email → { companyId, companyName, isAdmin }
+const COMPANY_MAP = {
+  "admin@sakai-general.jp":      { companyId: "sakai",      companyName: "堺総合サービス", isAdmin: true },
+  "sakai@sakai-general.jp":      { companyId: "sakai",      companyName: "堺総合サービス", isAdmin: false },
+  // ↓協力会社が増えたらここに追加
+  // "kyoryoku-a@example.jp":    { companyId: "kyoryoku_a", companyName: "協力会社A",      isAdmin: false },
+  // "kyoryoku-b@example.jp":    { companyId: "kyoryoku_b", companyName: "協力会社B",      isAdmin: false },
+};
 
 try {
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY") {
-    document.getElementById("firebase-warning").style.display = "block";
+  const app = initializeApp(firebaseConfig);
+  db   = getDatabase(app);
+  auth = getAuth(app);
+} catch(e) {
+  document.getElementById("firebase-warning").style.display = "block";
+}
+
+// 認証状態の監視
+onAuthStateChanged(auth, user => {
+  if (user) {
+    const info = COMPANY_MAP[user.email] || { companyId: user.uid, companyName: user.email, isAdmin: false };
+    currentUser = { uid: user.uid, email: user.email, ...info };
+    document.getElementById("login-screen").classList.remove("active");
+    document.getElementById("company-badge").textContent = currentUser.companyName;
+    // 管理者のみエクスポートボタン・編集削除を表示
+    document.querySelectorAll(".admin-only").forEach(el => {
+      el.style.display = currentUser.isAdmin ? "" : "none";
+    });
+    adjustLayout();
   } else {
-    db = getDatabase(initializeApp(firebaseConfig));
+    currentUser = null;
+    document.getElementById("login-screen").classList.add("active");
+    if (currentListener) { currentListener(); currentListener = null; }
   }
-} catch(e) { document.getElementById("firebase-warning").style.display = "block"; }
+});
+
+// ログイン・ログアウト
+window.doLogin = async function() {
+  const email = document.getElementById("login-email").value.trim();
+  const pass  = document.getElementById("login-pass").value;
+  const btn   = document.querySelector(".btn-login");
+  const err   = document.getElementById("login-error");
+  if (!email || !pass) { err.textContent = "メールアドレスとパスワードを入力してください"; return; }
+  btn.textContent = "ログイン中..."; btn.disabled = true; err.textContent = "";
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    err.textContent = "メールアドレスまたはパスワードが違います";
+    btn.textContent = "ログイン"; btn.disabled = false;
+  }
+};
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && document.getElementById("login-screen").classList.contains("active")) doLogin();
+});
+window.doLogout = async function() {
+  await signOut(auth);
+};
 
 function todayStr() { return new Date().toISOString().slice(0,10); }
 
@@ -434,7 +532,8 @@ window.submitRecord = async function() {
   const btn = document.getElementById("submit-btn");
   btn.disabled=true; btn.textContent="送信中...";
   try {
-    await push(ref(db,"records"), {
+    const companyId = currentUser?.companyId || "unknown";
+    await push(ref(db,"records/"+companyId), {
       date, name, areas,
       note:     document.getElementById("inp-note").value.trim(),
       tomorrow,
@@ -463,15 +562,32 @@ window.loadList = function() {
   if (!db) { container.innerHTML='<div class="empty-msg">Firebase未設定</div>'; return; }
   if (currentListener) currentListener();
   // orderByChildはインデックス設定が必要なため、全件取得してJS側でフィルタ
-  currentListener = onValue(ref(db,"records"), snap => {
-    const items = [];
-    snap.forEach(c => {
-      const v = c.val();
-      if (v.date === date) items.push({key:c.key,...v});
+  if (currentUser?.isAdmin) {
+    // 管理者：全社のデータを取得
+    currentListener = onValue(ref(db,"records"), snap => {
+      const items = [];
+      snap.forEach(compSnap => {
+        compSnap.forEach(c => {
+          const v = c.val();
+          if (v.date === date) items.push({key:c.key, companyId:compSnap.key, ...v});
+        });
+      });
+      items.sort((a,b)=>a.updatedAt-b.updatedAt);
+      renderList(items);
     });
-    items.sort((a,b)=>a.updatedAt-b.updatedAt);
-    renderList(items);
-  });
+  } else {
+    // 一般：自社のみ
+    const companyId = currentUser?.companyId || "unknown";
+    currentListener = onValue(ref(db,"records/"+companyId), snap => {
+      const items = [];
+      snap.forEach(c => {
+        const v = c.val();
+        if (v.date === date) items.push({key:c.key, companyId, ...v});
+      });
+      items.sort((a,b)=>a.updatedAt-b.updatedAt);
+      renderList(items);
+    });
+  }
 };
 
 function normAreas(r) {
@@ -596,7 +712,8 @@ function renderList(items) {
 // ---- 編集 ----
 window.openEdit = function(key) {
   editingKey = key;
-  onValue(ref(db,"records/"+key), snap => {
+  const cId = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===key)?.companyId || currentUser.companyId) : currentUser.companyId;
+  onValue(ref(db,"records/"+cId+"/"+key), snap => {
     const r = snap.val(); if (!r) return;
     const container = document.getElementById("edit-area-blocks");
     container.innerHTML = "";
@@ -620,8 +737,9 @@ window.saveEdit = async function() {
   const areas = collectBlocks("edit-area-blocks");
   if (areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
   try {
-    const snap = await new Promise(res=>onValue(ref(db,"records/"+editingKey),res,{onlyOnce:true}));
-    await set(ref(db,"records/"+editingKey), {
+    const cId2 = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===editingKey)?.companyId || currentUser.companyId) : currentUser.companyId;
+    const snap = await new Promise(res=>onValue(ref(db,"records/"+cId2+"/"+editingKey),res,{onlyOnce:true}));
+    await set(ref(db,"records/"+cId2+"/"+editingKey), {
       ...snap.val(), areas,
       note:     document.getElementById("edit-note").value.trim(),
       tomorrow: document.getElementById("edit-tomorrow").value.trim(),
@@ -634,7 +752,8 @@ window.saveEdit = async function() {
 
 window.deleteRecord = async function(key) {
   if (!confirm("この記録を削除しますか？")) return;
-  try { await remove(ref(db,"records/"+key)); showToast("削除しました"); }
+  const cIdD = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===key)?.companyId || currentUser.companyId) : currentUser.companyId;
+  try { await remove(ref(db,"records/"+cIdD+"/"+key)); showToast("削除しました"); }
   catch(e) { showToast("削除エラー: "+e.message); }
 };
 
@@ -754,7 +873,7 @@ window.exportExcel = async function() {
     // 次回点検区を書き込み（M=13,O=15,Q=17,S=19列に「〇」、N=14,P=16,R=18,T=20列に担当者名）
     const TANTO_NAME = "南\u3000元樹\u3000080-1484-5774";
     const tomorrowAreas = [...new Set(
-      window._lastRenderItems
+      (window._lastRenderItems||[])
         .map(r => (r.tomorrow||"").trim())
         .filter(t => t && !["無し","なし","ナシ","無"].includes(t) && !/^無し?$/.test(t))
     )];
