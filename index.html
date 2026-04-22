@@ -503,9 +503,21 @@ function renderList(items) {
     totals.detail1+=v.detail1;  totals.detail2+=v.detail2;
   });
 
+  const AREA_ORDER = [
+    "都島区","福島区","此花区","西区","港区","大正区","天王寺区","浪速区",
+    "西淀川区","東淀川区","東成区","生野区","旭区","城東区","阿倍野区","住吉区",
+    "東住吉区","西成区","淀川区","鶴見区","住之江区","平野区","北区","中央区"
+  ];
+
   function cell(n) { return `<td class="${n===0?'zero':''}">${n}</td>`; }
 
-  const rows = Object.entries(areaMap).map(([name, v]) => `
+  // 固定順でソート（リストにない区は末尾に追加）
+  const sortedEntries = [
+    ...AREA_ORDER.filter(k => areaMap[k]).map(k => [k, areaMap[k]]),
+    ...Object.entries(areaMap).filter(([k]) => !AREA_ORDER.includes(k))
+  ];
+
+  const rows = sortedEntries.map(([name, v]) => `
     <tr>
       <td>${esc(name)}</td>
       ${cell(v.kinsetsu)}${cell(v.enpo)}${cell(v.detail1)}${cell(v.detail2)}
