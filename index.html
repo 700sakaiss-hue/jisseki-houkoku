@@ -734,6 +734,28 @@ window.exportExcel = async function() {
 
     if (written === 0) { showToast("一致する区名がありませんでした"); return; }
 
+    // 次回点検区を書き込み（M=13,O=15,Q=17,S=19列に「〇」、N=14,P=16,R=18,T=20列に担当者名）
+    const TANTO_NAME = "南\u3000元樹\u3000080-1484-5774";
+    const tomorrowAreas = [...new Set(
+      window._lastRenderItems
+        .map(r => (r.tomorrow||"").trim())
+        .filter(t => t && !["無し","なし","ナシ","無"].includes(t) && !/^無し?$/.test(t))
+    )];
+    tomorrowAreas.forEach(areaName => {
+      const rowIdx = AREA_ROW_MAP[areaName];
+      if (!rowIdx) return;
+      const row = newSheet.getRow(rowIdx);
+      row.getCell(13).value = "○";  // M列：近接〇
+      row.getCell(14).value = TANTO_NAME; // N列：近接担当者
+      row.getCell(15).value = "○";  // O列：遠方〇
+      row.getCell(16).value = TANTO_NAME; // P列：遠方担当者
+      row.getCell(17).value = "○";  // Q列：詳細Ⅰ〇
+      row.getCell(18).value = TANTO_NAME; // R列：詳細Ⅰ担当者
+      row.getCell(19).value = "○";  // S列：詳細Ⅱ〇
+      row.getCell(20).value = TANTO_NAME; // T列：詳細Ⅱ担当者
+      row.commit();
+    });
+
     // xlsxとして出力
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
