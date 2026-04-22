@@ -408,7 +408,16 @@ window.doLogin = async function() {
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch(e) {
-    err.textContent = "メールアドレスまたはパスワードが違います";
+    console.error("ログインエラー詳細:", e.code, e.message);
+    const msg = {
+      "auth/invalid-credential":    "メールアドレスまたはパスワードが違います",
+      "auth/user-not-found":        "このメールアドレスは登録されていません",
+      "auth/wrong-password":        "パスワードが違います",
+      "auth/invalid-email":         "メールアドレスの形式が正しくありません",
+      "auth/too-many-requests":     "試行回数が多すぎます。しばらく待ってから再試行してください",
+      "auth/network-request-failed":"ネットワークエラーが発生しました",
+    }[e.code] || `エラー: ${e.code}`;
+    err.textContent = msg;
     btn.textContent = "ログイン"; btn.disabled = false;
   }
 };
