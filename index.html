@@ -364,11 +364,10 @@ let currentUser = null;   // { uid, email, companyId, companyName, isAdmin }
 // ★会社マスター：協力会社が増えたらここに追記するだけ★
 // email → { companyId, companyName, isAdmin }
 const COMPANY_MAP = {
-  "admin@sakai-general.jp":      { companyId: "sakai",      companyName: "堺総合サービス", isAdmin: true },
-  "sakai@sakai-general.jp":      { companyId: "sakai",      companyName: "堺総合サービス", isAdmin: false },
+  "kitaguchi@sakaiss.com":  { companyId: "sakai",   companyName: "堺総合サービス", isAdmin: true },
+  "shingaki@sakaiss.com":   { companyId: "trieze",  companyName: "トリエズ",       isAdmin: false },
   // ↓協力会社が増えたらここに追加
-  // "kyoryoku-a@example.jp":    { companyId: "kyoryoku_a", companyName: "協力会社A",      isAdmin: false },
-  // "kyoryoku-b@example.jp":    { companyId: "kyoryoku_b", companyName: "協力会社B",      isAdmin: false },
+  // "example@company.jp":  { companyId: "company", companyName: "会社名",         isAdmin: false },
 };
 
 try {
