@@ -89,7 +89,6 @@
   }
   .count-input:focus { outline: none; border-color: var(--grn-400); box-shadow: 0 0 0 3px rgba(58,158,95,0.15); }
 
-  /* 集計テーブル */
   .area-summary { margin-bottom: 12px; }
   .area-summary-title {
     font-size: 13px; font-weight: 500; color: var(--grn-800);
@@ -207,6 +206,7 @@
   }
   .toast.show { opacity: 1; }
   .loading { text-align: center; color: var(--gray-400); padding: 20px; font-size: 14px; }
+
   /* ログイン画面 */
   #login-screen { display:none; min-height:100vh; align-items:center; justify-content:center; flex-direction:column; padding:2rem; background:#f0f5f2; }
   #login-screen.active { display:flex; }
@@ -220,12 +220,15 @@
   .btn-login { width:100%; padding:14px; background:var(--grn-600); color:white; border:none; border-radius:8px; font-size:16px; font-weight:500; cursor:pointer; margin-top:8px; }
   .btn-login:active { background:var(--grn-800); }
   .login-error { font-size:13px; color:#e24b4a; text-align:center; margin-top:10px; min-height:18px; }
+
   /* 会社バッジ */
   .company-badge { font-size:11px; background:rgba(255,255,255,0.2); border-radius:10px; padding:2px 8px; margin-left:8px; }
+
   /* ログアウトボタン */
   .btn-logout { font-size:12px; color:rgba(255,255,255,0.8); background:none; border:1px solid rgba(255,255,255,0.3); border-radius:6px; padding:4px 10px; cursor:pointer; }
-  /* 管理者専用要素 */
-  .admin-only { display:none; }
+
+  /* 管理者専用要素：デフォルト非表示 */
+  .admin-only { display: none; }
 
   .btn-export {
     width: 100%; padding: 13px; background: white; color: var(--grn-600);
@@ -322,6 +325,7 @@
     <button onclick="goToday()">今日</button>
   </div>
   <div id="list-container"><div class="loading">読み込み中...</div></div>
+  <!-- ★修正：admin-only はそのまま、JS側で display:block に変更 -->
   <button class="btn-export admin-only" id="export-btn" onclick="exportExcel()" disabled>Excel様式にエクスポート</button>
 </div>
 
@@ -359,15 +363,12 @@ const firebaseConfig = {
 };
 
 let db = null, auth = null, editingKey = null, currentListener = null;
-let currentUser = null;   // { uid, email, companyId, companyName, isAdmin }
+let currentUser = null;
 
-// ★会社マスター：協力会社が増えたらここに追記するだけ★
-// email → { companyId, companyName, isAdmin }
+// ★会社マスター
 const COMPANY_MAP = {
   "kitaguchi@sakaiss.com":  { companyId: "sakai",   companyName: "堺総合サービス", isAdmin: true },
   "shingaki@sakaiss.com":   { companyId: "trieze",  companyName: "トリエズ",       isAdmin: false },
-  // ↓協力会社が増えたらここに追加
-  // "example@company.jp":  { companyId: "company", companyName: "会社名",         isAdmin: false },
 };
 
 try {
@@ -385,10 +386,12 @@ onAuthStateChanged(auth, user => {
     currentUser = { uid: user.uid, email: user.email, ...info };
     document.getElementById("login-screen").classList.remove("active");
     document.getElementById("company-badge").textContent = currentUser.companyName;
-    // 管理者のみエクスポートボタン・編集削除を表示
+
+    // ★修正：管理者のとき "block" を明示的に指定
     document.querySelectorAll(".admin-only").forEach(el => {
-      el.style.display = currentUser.isAdmin ? "" : "none";
+      el.style.display = currentUser.isAdmin ? "block" : "none";
     });
+
     adjustLayout();
   } else {
     currentUser = null;
@@ -408,7 +411,6 @@ window.doLogin = async function() {
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch(e) {
-    console.error("ログインエラー詳細:", e.code, e.message);
     const msg = {
       "auth/invalid-credential":    "メールアドレスまたはパスワードが違います",
       "auth/user-not-found":        "このメールアドレスは登録されていません",
@@ -430,7 +432,6 @@ window.doLogout = async function() {
 
 function todayStr() { return new Date().toISOString().slice(0,10); }
 
-// ヘッダー高さに合わせてタブバー位置とコンテンツ余白を動的調整
 function adjustLayout() {
   const header = document.querySelector('header');
   const tabBar = document.querySelector('.tab-bar');
@@ -519,7 +520,7 @@ function collectBlocks(containerId) {
   });
 }
 
-// 初期ブロック（削除ボタンなし）
+// 初期ブロック
 (function() {
   const uid = `inp-${++blockSeq}`;
   document.getElementById("area-blocks").insertAdjacentHTML(
@@ -548,7 +549,6 @@ window.submitRecord = async function() {
       updatedAt: Date.now()
     });
     showToast("送信しました！");
-    // リセット
     const c = document.getElementById("area-blocks");
     c.innerHTML = "";
     const uid = `inp-${++blockSeq}`;
@@ -569,9 +569,7 @@ window.loadList = function() {
   container.innerHTML = '<div class="loading">読み込み中...</div>';
   if (!db) { container.innerHTML='<div class="empty-msg">Firebase未設定</div>'; return; }
   if (currentListener) currentListener();
-  // orderByChildはインデックス設定が必要なため、全件取得してJS側でフィルタ
   if (currentUser?.isAdmin) {
-    // 管理者：全社のデータを取得
     currentListener = onValue(ref(db,"records"), snap => {
       const items = [];
       snap.forEach(compSnap => {
@@ -584,7 +582,6 @@ window.loadList = function() {
       renderList(items);
     });
   } else {
-    // 一般：自社のみ
     const companyId = currentUser?.companyId || "unknown";
     currentListener = onValue(ref(db,"records/"+companyId), snap => {
       const items = [];
@@ -609,8 +606,7 @@ function renderList(items) {
   const container = document.getElementById("list-container");
   if (!items.length) { container.innerHTML='<div class="empty-msg">この日のデータはありません</div>'; return; }
 
-  // 区ごとに集計
-  const areaMap = {}; // areaName -> {kinsetsu, enpo, detail1, detail2}
+  const areaMap = {};
   items.forEach(r => normAreas(r).forEach(a => {
     const k = a.areaName || "（区名なし）";
     if (!areaMap[k]) areaMap[k] = {kinsetsu:0, enpo:0, detail1:0, detail2:0};
@@ -620,7 +616,6 @@ function renderList(items) {
     areaMap[k].detail2  += a.detail2||0;
   }));
 
-  // 合計行
   const totals = {kinsetsu:0, enpo:0, detail1:0, detail2:0};
   Object.values(areaMap).forEach(v => {
     totals.kinsetsu+=v.kinsetsu; totals.enpo+=v.enpo;
@@ -635,7 +630,6 @@ function renderList(items) {
 
   function cell(n) { return `<td class="${n===0?'zero':''}">${n}</td>`; }
 
-  // 固定順でソート（リストにない区は末尾に追加）
   const sortedEntries = [
     ...AREA_ORDER.filter(k => areaMap[k]).map(k => [k, areaMap[k]]),
     ...Object.entries(areaMap).filter(([k]) => !AREA_ORDER.includes(k))
@@ -648,7 +642,6 @@ function renderList(items) {
       <td>${v.kinsetsu+v.enpo+v.detail1+v.detail2}</td>
     </tr>`).join("");
 
-  // 次回点検区（重複除去・AREA_ORDER順）
   const tomorrowSet = new Set(
     items.map(r => (r.tomorrow||"").trim())
          .filter(t => t && !["無し","なし","ナシ","無"].includes(t) && !/^無し?$/.test(t))
@@ -686,7 +679,6 @@ function renderList(items) {
     </div>
     ${tomorrowHtml}`;
 
-  // 個人レコード一覧
   const recordsHtml = items.map(r => {
     const areas = normAreas(r);
     const aHtml = areas.map((a,i) => `
@@ -767,9 +759,7 @@ window.deleteRecord = async function(key) {
 
 function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
-// ---- Excelエクスポート（ExcelJS + fetch方式）----
-
-// ExcelJSを動的ロード
+// ---- Excelエクスポート ----
 async function loadExcelJS() {
   if (window.ExcelJS) return;
   await new Promise((resolve, reject) => {
@@ -780,7 +770,6 @@ async function loadExcelJS() {
   });
 }
 
-// 区名→行番号マップ（テンプレートのC列, 行6〜29）
 const AREA_ROW_MAP = {
   "都島区":6,"福島区":7,"此花区":8,"西区":9,"港区":10,"大正区":11,
   "天王寺区":12,"浪速区":13,"西淀川区":14,"東淀川区":15,"東成区":16,
@@ -801,24 +790,19 @@ window.exportExcel = async function() {
   try {
     await loadExcelJS();
 
-    // テンプレートをfetchで取得
     const res = await fetch('稼働実績テンプレート.xlsx');
     if (!res.ok) throw new Error('テンプレートファイルが取得できません (HTTP ' + res.status + ')');
     const arrayBuf = await res.arrayBuffer();
 
-    // ExcelJSで読み込み（書式・罫線・結合・行高さ・列幅を完全保持）
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(arrayBuf);
 
-    // 「元」シートを取得してコピー
     const srcSheet = wb.getWorksheet('元');
     if (!srcSheet) throw new Error('「元」シートが見つかりません');
 
-    // 日付からシート名生成（例: 20250415）
     const sheetName = dateVal.replace(/-/g, '');
     const newSheet = wb.addWorksheet(sheetName);
 
-    // 列幅・行高さ・セル内容・スタイルをすべてコピー
     srcSheet.columns.forEach((col, i) => {
       if (col.width) newSheet.getColumn(i + 1).width = col.width;
     });
@@ -836,12 +820,10 @@ window.exportExcel = async function() {
       newRow.commit();
     });
 
-    // 結合セルをコピー
     (srcSheet.model.merges || []).forEach(merge => {
       try { newSheet.mergeCells(merge); } catch(e) {}
     });
 
-    // 区ごとに件数を集計
     const areaMap = {};
     window._lastRenderItems.forEach(r => {
       const areas = (r.areas && Array.isArray(r.areas)) ? r.areas
@@ -857,13 +839,6 @@ window.exportExcel = async function() {
       });
     });
 
-    // 実施数量を書き込み（H=遠方, I=近接, J=詳細Ⅰ, K=詳細Ⅱ）
-    // 日付をA列またはC1あたりに書き込む場合はここで追加
-    const d = new Date(dateVal + 'T00:00:00');
-    // C1に日付（元ファイルの指示文の前）は変更しない
-    // 日付のみ行1あたりに記入したい場合はコメントを外す
-    // newSheet.getRow(1).getCell(3).value = d;
-
     let written = 0;
     Object.entries(areaMap).forEach(([areaName, v]) => {
       const rowIdx = AREA_ROW_MAP[areaName];
@@ -878,7 +853,6 @@ window.exportExcel = async function() {
 
     if (written === 0) { showToast("一致する区名がありませんでした"); return; }
 
-    // 次回点検区を書き込み（M=13,O=15,Q=17,S=19列に「〇」、N=14,P=16,R=18,T=20列に担当者名）
     const TANTO_NAME = "南\u3000元樹\u3000080-1484-5774";
     const tomorrowAreas = [...new Set(
       (window._lastRenderItems||[])
@@ -889,18 +863,17 @@ window.exportExcel = async function() {
       const rowIdx = AREA_ROW_MAP[areaName];
       if (!rowIdx) return;
       const row = newSheet.getRow(rowIdx);
-      row.getCell(13).value = "○";  // M列：近接〇
-      row.getCell(14).value = TANTO_NAME; // N列：近接担当者
-      row.getCell(15).value = "○";  // O列：遠方〇
-      row.getCell(16).value = TANTO_NAME; // P列：遠方担当者
-      row.getCell(17).value = "○";  // Q列：詳細Ⅰ〇
-      row.getCell(18).value = TANTO_NAME; // R列：詳細Ⅰ担当者
-      row.getCell(19).value = "○";  // S列：詳細Ⅱ〇
-      row.getCell(20).value = TANTO_NAME; // T列：詳細Ⅱ担当者
+      row.getCell(13).value = "○";
+      row.getCell(14).value = TANTO_NAME;
+      row.getCell(15).value = "○";
+      row.getCell(16).value = TANTO_NAME;
+      row.getCell(17).value = "○";
+      row.getCell(18).value = TANTO_NAME;
+      row.getCell(19).value = "○";
+      row.getCell(20).value = TANTO_NAME;
       row.commit();
     });
 
-    // xlsxとして出力
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url = URL.createObjectURL(blob);
@@ -919,7 +892,6 @@ window.exportExcel = async function() {
 
   btn.disabled = false; btn.textContent = "Excel様式にエクスポート";
 };
-
 
 function showToast(msg) {
   const t=document.getElementById("toast");
