@@ -264,7 +264,6 @@
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
-      <span id="header-user" style="font-size:11px;opacity:0.8;"></span>
       <span id="header-date" style="font-size:11px;opacity:0.8;"></span>
     </div>
     <button class="btn-logout" onclick="doLogout()" style="font-size:11px;padding:3px 8px;">ログアウト</button>
@@ -428,7 +427,6 @@ onAuthStateChanged(auth, user => {
     currentUser = { uid: user.uid, email: user.email, ...info };
     document.getElementById("login-screen").classList.remove("active");
     document.getElementById("company-badge").textContent = currentUser.companyName;
-    document.getElementById("header-user").textContent = currentUser.companyName;
     document.querySelectorAll(".admin-only").forEach(el => {
       el.style.display = currentUser.isAdmin ? "block" : "none";
     });
