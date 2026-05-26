@@ -278,9 +278,9 @@
     ⚠️ Firebase未設定のため、データは保存されません。firebaseConfigを設定してください。
   </div>
 
-  <!-- 天気カード -->
+  <!-- 天気カード（パターンC：時間帯別降水確率統合） -->
   <div class="card" id="weather-card" style="padding: 10px 14px;">
-    <div style="display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
       <div style="display:flex; align-items:center; gap:8px;">
         <span id="weather-icon" style="font-size:22px;">⏳</span>
         <div>
@@ -297,9 +297,27 @@
           <div style="font-size:9px; color:var(--gray-400);">最低</div>
           <div id="weather-min" style="font-size:14px; font-weight:500; color:#378ADD;">--</div>
         </div>
+      </div>
+    </div>
+    <!-- 時間帯別降水確率 -->
+    <div id="weather-hourly" style="display:none; border-top:1px solid var(--grn-50); padding-top:8px;">
+      <div style="font-size:10px; color:var(--grn-400); font-weight:500; margin-bottom:6px;">時間帯別 降水確率</div>
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:4px; text-align:center;">
         <div>
-          <div style="font-size:9px; color:var(--gray-400);">降水</div>
-          <div id="weather-rain" style="font-size:14px; font-weight:500; color:var(--grn-800);">--</div>
+          <div style="font-size:9px; color:var(--gray-400); margin-bottom:2px;">0〜6時</div>
+          <div id="rain-0" style="font-size:13px; font-weight:500;">--</div>
+        </div>
+        <div>
+          <div style="font-size:9px; color:var(--gray-400); margin-bottom:2px;">6〜12時</div>
+          <div id="rain-6" style="font-size:13px; font-weight:500;">--</div>
+        </div>
+        <div>
+          <div style="font-size:9px; color:var(--gray-400); margin-bottom:2px;">12〜18時</div>
+          <div id="rain-12" style="font-size:13px; font-weight:500;">--</div>
+        </div>
+        <div>
+          <div style="font-size:9px; color:var(--gray-400); margin-bottom:2px;">18〜24時</div>
+          <div id="rain-18" style="font-size:13px; font-weight:500;">--</div>
         </div>
       </div>
     </div>
@@ -981,7 +999,8 @@ async function fetchWeather() {
     const dateStr = target.toISOString().slice(0, 10);
     const url = "https://api.open-meteo.com/v1/forecast"
       + "?latitude=34.6937&longitude=135.5022"
-      + "&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max"
+      + "&daily=weathercode,temperature_2m_max,temperature_2m_min"
+      + "&hourly=precipitation_probability"
       + "&timezone=Asia%2FTokyo"
       + "&start_date=" + dateStr
       + "&end_date=" + dateStr;
@@ -993,7 +1012,6 @@ async function fetchWeather() {
     const code  = data.daily.weathercode[0];
     const tmax  = Math.round(data.daily.temperature_2m_max[0]);
     const tmin  = Math.round(data.daily.temperature_2m_min[0]);
-    const rain  = data.daily.precipitation_probability_max[0];
     const { icon, desc } = weatherInfo(code);
 
     document.getElementById("weather-label").textContent = getWeatherLabel(target);
@@ -1001,7 +1019,30 @@ async function fetchWeather() {
     document.getElementById("weather-desc").textContent  = desc;
     document.getElementById("weather-max").textContent   = tmax + "℃";
     document.getElementById("weather-min").textContent   = tmin + "℃";
-    document.getElementById("weather-rain").textContent  = rain + "%";
+
+    // 時間帯別降水確率（hourly: 24時間分）
+    // 各時間帯の最大値を使用
+    const pp = data.hourly.precipitation_probability; // 24要素
+    function maxRain(start, end) {
+      return Math.max(...pp.slice(start, end));
+    }
+    const r0  = maxRain(0, 6);
+    const r6  = maxRain(6, 12);
+    const r12 = maxRain(12, 18);
+    const r18 = maxRain(18, 24);
+
+    function rainColor(v) { return v >= 30 ? "#378ADD" : "var(--grn-800)"; }
+
+    document.getElementById("rain-0").textContent  = r0  + "%";
+    document.getElementById("rain-6").textContent  = r6  + "%";
+    document.getElementById("rain-12").textContent = r12 + "%";
+    document.getElementById("rain-18").textContent = r18 + "%";
+    document.getElementById("rain-0").style.color  = rainColor(r0);
+    document.getElementById("rain-6").style.color  = rainColor(r6);
+    document.getElementById("rain-12").style.color = rainColor(r12);
+    document.getElementById("rain-18").style.color = rainColor(r18);
+    document.getElementById("weather-hourly").style.display = "block";
+
   } catch(e) {
     document.getElementById("weather-label").textContent = "天気の取得に失敗しました";
     document.getElementById("weather-icon").textContent  = "⚠️";
