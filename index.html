@@ -61,7 +61,6 @@
     outline: none; border-color: var(--grn-400); box-shadow: 0 0 0 3px rgba(58,158,95,0.15);
   }
   textarea { resize: vertical; min-height: 80px; }
-
   .area-block {
     border: 1px solid #c2deca; border-radius: 10px; padding: 14px;
     margin-bottom: 12px; background: #f4faf6;
@@ -79,7 +78,6 @@
     cursor: pointer; display: flex; align-items: center; justify-content: center;
   }
   .btn-remove-area:active { background: #fef0f0; }
-
   .count-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .count-item label { font-size: 13px; }
   .count-input {
@@ -88,7 +86,18 @@
     background: white; -webkit-appearance: none;
   }
   .count-input:focus { outline: none; border-color: var(--grn-400); box-shadow: 0 0 0 3px rgba(58,158,95,0.15); }
-
+  /* 明日の点検区（複数） */
+  .tomorrow-input-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  .tomorrow-input-row input[type="text"] { flex: 1; }
+  .btn-remove-tomorrow {
+    width: 32px; height: 32px; border-radius: 50%; border: 1px solid #f0b0b0;
+    background: white; color: #e24b4a; font-size: 18px; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .btn-remove-tomorrow:active { background: #fef0f0; }
   .area-summary { margin-bottom: 12px; }
   .area-summary-title {
     font-size: 13px; font-weight: 500; color: var(--grn-800);
@@ -128,7 +137,6 @@
     font-size: 15px; cursor: pointer; transition: all 0.15s;
   }
   .btn-add-area:active { background: var(--grn-100); }
-
   .btn-submit {
     width: 100%; padding: 16px; background: var(--grn-600); color: white;
     border: none; border-radius: 10px; font-size: 17px; font-weight: 500;
@@ -136,18 +144,12 @@
   }
   .btn-submit:active { background: var(--grn-800); }
   .btn-submit:disabled { background: var(--gray-200); cursor: not-allowed; }
-
   .date-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
   .date-nav input[type="date"] { flex: 1; padding: 10px 12px; font-size: 16px; }
   .date-nav button {
     padding: 10px 14px; border: 1px solid #ddd; background: white;
     border-radius: 8px; font-size: 15px; cursor: pointer; color: var(--grn-600);
   }
-  .summary-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 16px; }
-  .summary-card { background: var(--grn-50); border-radius: 8px; padding: 10px 8px; text-align: center; }
-  .summary-card .s-label { font-size: 11px; color: var(--grn-600); margin-bottom: 4px; }
-  .summary-card .s-num { font-size: 22px; font-weight: 500; color: var(--grn-800); }
-
   .record-item {
     background: white; border-radius: 10px; padding: 14px 16px;
     margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
@@ -184,7 +186,6 @@
   }
   .record-tomorrow { font-size: 13px; color: var(--gray-400); margin-top: 2px; }
   .empty-msg { text-align: center; color: var(--gray-400); padding: 40px 20px; font-size: 15px; }
-
   .modal-overlay {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
     z-index: 200; align-items: flex-end; justify-content: center;
@@ -206,8 +207,6 @@
   }
   .toast.show { opacity: 1; }
   .loading { text-align: center; color: var(--gray-400); padding: 20px; font-size: 14px; }
-
-  /* ログイン画面 */
   #login-screen { display:none; min-height:100vh; align-items:center; justify-content:center; flex-direction:column; padding:2rem; background:#f0f5f2; }
   #login-screen.active { display:flex; }
   .login-card { background:white; border-radius:16px; padding:2rem; width:100%; max-width:360px; box-shadow:0 2px 12px rgba(0,0,0,0.1); }
@@ -220,16 +219,9 @@
   .btn-login { width:100%; padding:14px; background:var(--grn-600); color:white; border:none; border-radius:8px; font-size:16px; font-weight:500; cursor:pointer; margin-top:8px; }
   .btn-login:active { background:var(--grn-800); }
   .login-error { font-size:13px; color:#e24b4a; text-align:center; margin-top:10px; min-height:18px; }
-
-  /* 会社バッジ */
   .company-badge { font-size:11px; background:rgba(255,255,255,0.2); border-radius:10px; padding:2px 8px; margin-left:8px; }
-
-  /* ログアウトボタン */
   .btn-logout { font-size:12px; color:rgba(255,255,255,0.8); background:none; border:1px solid rgba(255,255,255,0.3); border-radius:6px; padding:4px 10px; cursor:pointer; }
-
-  /* 管理者専用要素：デフォルト非表示 */
   .admin-only { display: none; }
-
   .btn-export {
     width: 100%; padding: 13px; background: white; color: var(--grn-600);
     border: 2px solid var(--grn-400); border-radius: 10px; font-size: 15px;
@@ -245,7 +237,6 @@
 </head>
 <body>
 
-<!-- ログイン画面 -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">堺総合サービス</div>
@@ -307,7 +298,8 @@
     <div class="card-title">補足情報</div>
     <div class="form-group">
       <label>明日の点検区<span class="required">必須</span></label>
-      <input type="text" id="inp-tomorrow" placeholder="稼働なしの場合は&quot;無し&quot;">
+      <div id="inp-tomorrow-list"></div>
+      <button class="btn-add-area" onclick="addTomorrowRow('inp-tomorrow-list','inp')" style="margin-top:4px">＋ 明日の点検区を追加</button>
     </div>
     <div class="form-group">
       <label>備考（任意）</label>
@@ -325,7 +317,6 @@
     <button onclick="goToday()">今日</button>
   </div>
   <div id="list-container"><div class="loading">読み込み中...</div></div>
-  <!-- ★修正：admin-only はそのまま、JS側で display:block に変更 -->
   <button class="btn-export admin-only" id="export-btn" onclick="exportExcel()" disabled>Excel様式にエクスポート</button>
 </div>
 
@@ -337,7 +328,11 @@
     </div>
     <div id="edit-area-blocks"></div>
     <button class="btn-add-area" onclick="addAreaBlock('edit-area-blocks','edit')" style="margin-bottom:16px">＋ 点検区を追加</button>
-    <div class="form-group"><label>明日の点検区<span class="required">必須</span></label><input type="text" id="edit-tomorrow"></div>
+    <div class="form-group">
+      <label>明日の点検区<span class="required">必須</span></label>
+      <div id="edit-tomorrow-list"></div>
+      <button class="btn-add-area" onclick="addTomorrowRow('edit-tomorrow-list','edit')" style="margin-top:4px">＋ 明日の点検区を追加</button>
+    </div>
     <div class="form-group"><label>備考</label><textarea id="edit-note"></textarea></div>
     <button class="btn-submit" onclick="saveEdit()">保存する</button>
   </div>
@@ -365,7 +360,6 @@ const firebaseConfig = {
 let db = null, auth = null, editingKey = null, currentListener = null;
 let currentUser = null;
 
-// ★会社マスター
 const COMPANY_MAP = {
   "kitaguchi@sakaiss.com":  { companyId: "sakai",   companyName: "堺総合サービス", isAdmin: true },
   "shingaki@sakaiss.com":   { companyId: "trieze",  companyName: "トリエズ",       isAdmin: false },
@@ -379,19 +373,15 @@ try {
   document.getElementById("firebase-warning").style.display = "block";
 }
 
-// 認証状態の監視
 onAuthStateChanged(auth, user => {
   if (user) {
     const info = COMPANY_MAP[user.email] || { companyId: user.uid, companyName: user.email, isAdmin: false };
     currentUser = { uid: user.uid, email: user.email, ...info };
     document.getElementById("login-screen").classList.remove("active");
     document.getElementById("company-badge").textContent = currentUser.companyName;
-
-    // ★修正：管理者のとき "block" を明示的に指定
     document.querySelectorAll(".admin-only").forEach(el => {
       el.style.display = currentUser.isAdmin ? "block" : "none";
     });
-
     adjustLayout();
   } else {
     currentUser = null;
@@ -400,7 +390,6 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// ログイン・ログアウト
 window.doLogin = async function() {
   const email = document.getElementById("login-email").value.trim();
   const pass  = document.getElementById("login-pass").value;
@@ -418,7 +407,7 @@ window.doLogin = async function() {
       "auth/invalid-email":         "メールアドレスの形式が正しくありません",
       "auth/too-many-requests":     "試行回数が多すぎます。しばらく待ってから再試行してください",
       "auth/network-request-failed":"ネットワークエラーが発生しました",
-    }[e.code] || `エラー: ${e.code}`;
+    }[e.code] || "エラー: " + e.code;
     err.textContent = msg;
     btn.textContent = "ログイン"; btn.disabled = false;
   }
@@ -426,9 +415,7 @@ window.doLogin = async function() {
 document.addEventListener("keydown", e => {
   if (e.key === "Enter" && document.getElementById("login-screen").classList.contains("active")) doLogin();
 });
-window.doLogout = async function() {
-  await signOut(auth);
-};
+window.doLogout = async function() { await signOut(auth); };
 
 function todayStr() { return new Date().toISOString().slice(0,10); }
 
@@ -450,7 +437,6 @@ document.getElementById("header-date").textContent =
 
 window.goToday = () => { document.getElementById("list-date").value = todayStr(); loadList(); };
 
-// ---- タブ ----
 window.switchTab = function(tab) {
   document.querySelectorAll(".tab-btn").forEach((b,i) => b.classList.toggle("active",(i===0)===(tab==="input")));
   document.getElementById("page-input").classList.toggle("active", tab==="input");
@@ -463,39 +449,37 @@ let blockSeq = 0;
 
 function makeBlockHtml(uid, idx, areaVal, k, e, d1, d2, removable) {
   const rmBtn = removable
-    ? `<button class="btn-remove-area" onclick="removeBlock('${uid}')">×</button>`
+    ? '<button class="btn-remove-area" onclick="removeBlock(\'' + uid + '\')">×</button>'
     : "";
-  return `
-    <div class="area-block" id="block-${uid}">
-      <div class="area-block-header">
-        <span class="area-block-label">点検区 ${idx+1}</span>
-        ${rmBtn}
-      </div>
-      <div class="form-group" style="margin-bottom:12px">
-        <input type="text" id="aname-${uid}" placeholder="例：都島区" value="${esc(areaVal)}">
-      </div>
-      <div class="count-grid">
-        ${ci("近接点検",`ck-${uid}`,k)}
-        ${ci("遠方点検",`ce-${uid}`,e)}
-        ${ci("詳細点検1",`cd1-${uid}`,d1)}
-        ${ci("詳細点検2",`cd2-${uid}`,d2)}
-      </div>
-    </div>`;
+  return '<div class="area-block" id="block-' + uid + '">'
+    + '<div class="area-block-header">'
+    + '<span class="area-block-label">点検区 ' + (idx+1) + '</span>'
+    + rmBtn
+    + '</div>'
+    + '<div class="form-group" style="margin-bottom:12px">'
+    + '<input type="text" id="aname-' + uid + '" placeholder="例：都島区" value="' + esc(areaVal) + '">'
+    + '</div>'
+    + '<div class="count-grid">'
+    + ci("近接点検", "ck-" + uid, k)
+    + ci("遠方点検", "ce-" + uid, e)
+    + ci("詳細点検1", "cd1-" + uid, d1)
+    + ci("詳細点検2", "cd2-" + uid, d2)
+    + '</div></div>';
 }
 
 function ci(label, id, val) {
-  return `<div class="count-item">
-    <label style="font-size:12px;margin-bottom:3px">${label}</label>
-    <input type="number" class="count-input" id="${id}" value="${val}" min="0" inputmode="numeric"
-      onfocus="if(this.value==='0')this.value=''"
-      onblur="if(this.value==='')this.value='0'">
-  </div>`;
+  return '<div class="count-item">'
+    + '<label style="font-size:12px;margin-bottom:3px">' + label + '</label>'
+    + '<input type="number" class="count-input" id="' + id + '" value="' + val + '" min="0" inputmode="numeric"'
+    + ' onfocus="if(this.value===\'0\')this.value=\'\'"'
+    + ' onblur="if(this.value===\'\')this.value=\'0\'">'
+    + '</div>';
 }
 
 window.addAreaBlock = function(containerId, prefix) {
   const container = document.getElementById(containerId);
   const idx = container.querySelectorAll(".area-block").length;
-  const uid = `${prefix}-${++blockSeq}`;
+  const uid = prefix + "-" + (++blockSeq);
   container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, idx, "", 0,0,0,0, idx>0));
 };
 
@@ -504,27 +488,73 @@ window.removeBlock = function(uid) {
   if (!block) return;
   const container = block.parentElement;
   block.remove();
-  container.querySelectorAll(".area-block-label").forEach((el,i) => el.textContent = `点検区 ${i+1}`);
+  container.querySelectorAll(".area-block-label").forEach((el,i) => el.textContent = "点検区 " + (i+1));
 };
 
 function collectBlocks(containerId) {
-  return Array.from(document.querySelectorAll(`#${containerId} .area-block`)).map(b => {
+  return Array.from(document.querySelectorAll("#" + containerId + " .area-block")).map(b => {
     const uid = b.id.replace("block-","");
     return {
-      areaName: (document.getElementById(`aname-${uid}`)?.value||"").trim(),
-      kinsetsu: parseInt(document.getElementById(`ck-${uid}`)?.value)||0,
-      enpo:     parseInt(document.getElementById(`ce-${uid}`)?.value)||0,
-      detail1:  parseInt(document.getElementById(`cd1-${uid}`)?.value)||0,
-      detail2:  parseInt(document.getElementById(`cd2-${uid}`)?.value)||0,
+      areaName: (document.getElementById("aname-" + uid)?.value||"").trim(),
+      kinsetsu: parseInt(document.getElementById("ck-" + uid)?.value)||0,
+      enpo:     parseInt(document.getElementById("ce-" + uid)?.value)||0,
+      detail1:  parseInt(document.getElementById("cd1-" + uid)?.value)||0,
+      detail2:  parseInt(document.getElementById("cd2-" + uid)?.value)||0,
     };
   });
 }
 
-// 初期ブロック
+// ---- 明日の点検区（複数） ----
+let tomorrowSeq = 0;
+
+window.addTomorrowRow = function(containerId, prefix, value) {
+  value = value || "";
+  const container = document.getElementById(containerId);
+  const uid = "tm-" + prefix + "-" + (++tomorrowSeq);
+  const isFirst = container.querySelectorAll(".tomorrow-input-row").length === 0;
+  const rmBtn = isFirst ? "" : '<button class="btn-remove-tomorrow" onclick="removeTomorrowRow(\'' + uid + '\')">×</button>';
+  container.insertAdjacentHTML("beforeend",
+    '<div class="tomorrow-input-row" id="' + uid + '">'
+    + '<input type="text" placeholder="例：都島区（稼働なしの場合は「無し」）" value="' + esc(value) + '">'
+    + rmBtn
+    + '</div>');
+};
+
+window.removeTomorrowRow = function(uid) {
+  document.getElementById(uid)?.remove();
+};
+
+function collectTomorrowRows(containerId) {
+  return Array.from(document.querySelectorAll("#" + containerId + " .tomorrow-input-row input"))
+    .map(el => el.value.trim())
+    .filter(v => v !== "");
+}
+
+function resetTomorrowRows(containerId, prefix) {
+  document.getElementById(containerId).innerHTML = "";
+  addTomorrowRow(containerId, prefix);
+}
+
+function fillTomorrowRows(containerId, prefix, values) {
+  document.getElementById(containerId).innerHTML = "";
+  const arr = Array.isArray(values) ? values : (values ? [values] : []);
+  if (arr.length === 0) { addTomorrowRow(containerId, prefix); return; }
+  arr.forEach(v => addTomorrowRow(containerId, prefix, v));
+}
+
+// 旧データ（tomorrow: string）と新データ（tomorrows: array）両対応
+function normTomorrows(r) {
+  if (r.tomorrows && Array.isArray(r.tomorrows)) return r.tomorrows;
+  if (r.tomorrow) return [r.tomorrow];
+  return [];
+}
+
+// 初期化
 (function() {
-  const uid = `inp-${++blockSeq}`;
+  const uid = "inp-" + (++blockSeq);
   document.getElementById("area-blocks").insertAdjacentHTML(
     "beforeend", makeBlockHtml(uid, 0, "", 0,0,0,0, false));
+  addTomorrowRow("inp-tomorrow-list", "inp");
 })();
 
 // ---- 送信 ----
@@ -534,9 +564,8 @@ window.submitRecord = async function() {
   if (!date||!name) { showToast("日付と点検者名は必須です"); return; }
   const areas = collectBlocks("area-blocks");
   if (!areas.length || areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
-  const tomorrow = document.getElementById("inp-tomorrow").value.trim();
-  if (!tomorrow) { showToast("明日の点検区を入力してください"); return; }
-
+  const tomorrows = collectTomorrowRows("inp-tomorrow-list");
+  if (!tomorrows.length) { showToast("明日の点検区を入力してください"); return; }
   if (!db) { showToast("Firebase未設定のため保存できません"); return; }
   const btn = document.getElementById("submit-btn");
   btn.disabled=true; btn.textContent="送信中...";
@@ -544,17 +573,17 @@ window.submitRecord = async function() {
     const companyId = currentUser?.companyId || "unknown";
     await push(ref(db,"records/"+companyId), {
       date, name, areas,
-      note:     document.getElementById("inp-note").value.trim(),
-      tomorrow,
+      note:      document.getElementById("inp-note").value.trim(),
+      tomorrows,
       updatedAt: Date.now()
     });
     showToast("送信しました！");
     const c = document.getElementById("area-blocks");
     c.innerHTML = "";
-    const uid = `inp-${++blockSeq}`;
+    const uid = "inp-" + (++blockSeq);
     c.insertAdjacentHTML("beforeend", makeBlockHtml(uid,0,"",0,0,0,0,false));
     document.getElementById("inp-note").value = "";
-    document.getElementById("inp-tomorrow").value = "";
+    resetTomorrowRows("inp-tomorrow-list", "inp");
     document.getElementById("list-date").value = date;
     switchTab("list");
   } catch(e) { showToast("送信エラー: "+e.message); }
@@ -628,82 +657,78 @@ function renderList(items) {
     "東住吉区","西成区","淀川区","鶴見区","住之江区","平野区","北区","中央区"
   ];
 
-  function cell(n) { return `<td class="${n===0?'zero':''}">${n}</td>`; }
+  function cell(n) { return '<td class="' + (n===0?'zero':'') + '">' + n + '</td>'; }
 
   const sortedEntries = [
     ...AREA_ORDER.filter(k => areaMap[k]).map(k => [k, areaMap[k]]),
     ...Object.entries(areaMap).filter(([k]) => !AREA_ORDER.includes(k))
   ];
 
-  const rows = sortedEntries.map(([name, v]) => `
-    <tr>
-      <td>${esc(name)}</td>
-      ${cell(v.kinsetsu)}${cell(v.enpo)}${cell(v.detail1)}${cell(v.detail2)}
-      <td>${v.kinsetsu+v.enpo+v.detail1+v.detail2}</td>
-    </tr>`).join("");
+  const rows = sortedEntries.map(([name, v]) =>
+    '<tr><td>' + esc(name) + '</td>'
+    + cell(v.kinsetsu) + cell(v.enpo) + cell(v.detail1) + cell(v.detail2)
+    + '<td>' + (v.kinsetsu+v.enpo+v.detail1+v.detail2) + '</td></tr>'
+  ).join("");
 
-  const tomorrowSet = new Set(
-    items.map(r => (r.tomorrow||"").trim())
-         .filter(t => t && !["無し","なし","ナシ","無"].includes(t) && !/^無し?$/.test(t))
-  );
+  // 次回点検区：全レコードのtomorrowsを集約
+  const NASHI = ["無し","なし","ナシ","無"];
+  const tomorrowSet = new Set();
+  items.forEach(r => {
+    normTomorrows(r).forEach(t => {
+      const trimmed = t.trim();
+      if (trimmed && !NASHI.includes(trimmed)) tomorrowSet.add(trimmed);
+    });
+  });
   const tomorrowAreas = [
     ...AREA_ORDER.filter(k => tomorrowSet.has(k)),
     ...[...tomorrowSet].filter(k => !AREA_ORDER.includes(k))
   ];
-  const tomorrowHtml = `
-    <div class="area-summary">
-      <div class="area-summary-title">次回点検区</div>
-      <div class="tomorrow-list">
-        ${tomorrowAreas.length
-          ? tomorrowAreas.map(t => `<span class="tomorrow-tag">${esc(t)}</span>`).join("")
-          : '<span style="font-size:13px;color:var(--gray-400)">データなし</span>'}
-      </div>
-    </div>`;
 
-  const summaryHtml = `
-    <div class="area-summary">
-      <div class="area-summary-title">区別集計</div>
-      <table class="summary-table">
-        <thead><tr>
-          <th>点検区</th><th>近接</th><th>遠方</th><th>詳細1</th><th>詳細2</th><th>合計</th>
-        </tr></thead>
-        <tbody>
-          ${rows}
-          <tr>
-            <td>合計</td>
-            ${cell(totals.kinsetsu)}${cell(totals.enpo)}${cell(totals.detail1)}${cell(totals.detail2)}
-            <td>${totals.kinsetsu+totals.enpo+totals.detail1+totals.detail2}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    ${tomorrowHtml}`;
+  const tomorrowHtml = '<div class="area-summary">'
+    + '<div class="area-summary-title">次回点検区</div>'
+    + '<div class="tomorrow-list">'
+    + (tomorrowAreas.length
+        ? tomorrowAreas.map(t => '<span class="tomorrow-tag">' + esc(t) + '</span>').join("")
+        : '<span style="font-size:13px;color:var(--gray-400)">データなし</span>')
+    + '</div></div>';
+
+  const summaryHtml = '<div class="area-summary">'
+    + '<div class="area-summary-title">区別集計</div>'
+    + '<table class="summary-table"><thead><tr>'
+    + '<th>点検区</th><th>近接</th><th>遠方</th><th>詳細1</th><th>詳細2</th><th>合計</th>'
+    + '</tr></thead><tbody>'
+    + rows
+    + '<tr><td>合計</td>'
+    + cell(totals.kinsetsu) + cell(totals.enpo) + cell(totals.detail1) + cell(totals.detail2)
+    + '<td>' + (totals.kinsetsu+totals.enpo+totals.detail1+totals.detail2) + '</td></tr>'
+    + '</tbody></table></div>'
+    + tomorrowHtml;
 
   const recordsHtml = items.map(r => {
     const areas = normAreas(r);
-    const aHtml = areas.map((a,i) => `
-      ${i>0?'<hr class="area-divider">':''}
-      <div class="area-section">
-        <span class="area-tag">${esc(a.areaName)}</span>
-        <div class="counts-row">
-          <div class="count-badge"><span class="cb-label">近接</span><span class="cb-val">${a.kinsetsu||0}</span></div>
-          <div class="count-badge"><span class="cb-label">遠方</span><span class="cb-val">${a.enpo||0}</span></div>
-          <div class="count-badge"><span class="cb-label">詳細1</span><span class="cb-val">${a.detail1||0}</span></div>
-          <div class="count-badge"><span class="cb-label">詳細2</span><span class="cb-val">${a.detail2||0}</span></div>
-        </div>
-      </div>`).join("");
-    return `<div class="record-item">
-      <div class="record-header">
-        <div class="record-name">${esc(r.name)}</div>
-        <div class="record-actions">
-          <button class="btn-edit" onclick="openEdit('${r.key}')">編集</button>
-          <button class="btn-del" onclick="deleteRecord('${r.key}')">削除</button>
-        </div>
-      </div>
-      ${aHtml}
-      ${r.note?`<div class="record-note">📝 ${esc(r.note)}</div>`:""}
-      ${r.tomorrow?`<div class="record-tomorrow">明日: ${esc(r.tomorrow)}</div>`:""}
-    </div>`;
+    const tomorrows = normTomorrows(r);
+    const aHtml = areas.map((a,i) =>
+      (i>0?'<hr class="area-divider">':'')
+      + '<div class="area-section">'
+      + '<span class="area-tag">' + esc(a.areaName) + '</span>'
+      + '<div class="counts-row">'
+      + '<div class="count-badge"><span class="cb-label">近接</span><span class="cb-val">' + (a.kinsetsu||0) + '</span></div>'
+      + '<div class="count-badge"><span class="cb-label">遠方</span><span class="cb-val">' + (a.enpo||0) + '</span></div>'
+      + '<div class="count-badge"><span class="cb-label">詳細1</span><span class="cb-val">' + (a.detail1||0) + '</span></div>'
+      + '<div class="count-badge"><span class="cb-label">詳細2</span><span class="cb-val">' + (a.detail2||0) + '</span></div>'
+      + '</div></div>'
+    ).join("");
+    return '<div class="record-item">'
+      + '<div class="record-header">'
+      + '<div class="record-name">' + esc(r.name) + '</div>'
+      + '<div class="record-actions">'
+      + '<button class="btn-edit" onclick="openEdit(\'' + r.key + '\')">編集</button>'
+      + '<button class="btn-del" onclick="deleteRecord(\'' + r.key + '\')">削除</button>'
+      + '</div></div>'
+      + aHtml
+      + (r.note ? '<div class="record-note">📝 ' + esc(r.note) + '</div>' : '')
+      + (tomorrows.length ? '<div class="record-tomorrow">明日: ' + tomorrows.map(esc).join("、") + '</div>' : '')
+      + '</div>';
   }).join("");
 
   container.innerHTML = summaryHtml + recordsHtml;
@@ -718,11 +743,11 @@ window.openEdit = function(key) {
     const container = document.getElementById("edit-area-blocks");
     container.innerHTML = "";
     normAreas(r).forEach((a,i) => {
-      const uid = `edit-${++blockSeq}`;
+      const uid = "edit-" + (++blockSeq);
       container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, i, a.areaName, a.kinsetsu||0, a.enpo||0, a.detail1||0, a.detail2||0, i>0));
     });
+    fillTomorrowRows("edit-tomorrow-list", "edit", normTomorrows(r));
     document.getElementById("edit-note").value = r.note||"";
-    document.getElementById("edit-tomorrow").value = r.tomorrow||"";
   }, {onlyOnce:true});
   document.getElementById("edit-modal").classList.add("open");
 };
@@ -736,13 +761,14 @@ window.saveEdit = async function() {
   if (!editingKey||!db) return;
   const areas = collectBlocks("edit-area-blocks");
   if (areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
+  const tomorrows = collectTomorrowRows("edit-tomorrow-list");
+  if (!tomorrows.length) { showToast("明日の点検区を入力してください"); return; }
   try {
     const cId2 = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===editingKey)?.companyId || currentUser.companyId) : currentUser.companyId;
     const snap = await new Promise(res=>onValue(ref(db,"records/"+cId2+"/"+editingKey),res,{onlyOnce:true}));
     await set(ref(db,"records/"+cId2+"/"+editingKey), {
-      ...snap.val(), areas,
-      note:     document.getElementById("edit-note").value.trim(),
-      tomorrow: document.getElementById("edit-tomorrow").value.trim(),
+      ...snap.val(), areas, tomorrows,
+      note:      document.getElementById("edit-note").value.trim(),
       updatedAt: Date.now()
     });
     showToast("更新しました");
@@ -783,46 +809,31 @@ window.exportExcel = async function() {
   if (!window._lastRenderItems || !window._lastRenderItems.length) {
     showToast("エクスポートするデータがありません"); return;
   }
-
   const btn = document.getElementById("export-btn");
   btn.disabled = true; btn.textContent = "生成中...";
-
   try {
     await loadExcelJS();
-
     const res = await fetch('稼働実績テンプレート.xlsx');
     if (!res.ok) throw new Error('テンプレートファイルが取得できません (HTTP ' + res.status + ')');
     const arrayBuf = await res.arrayBuffer();
-
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(arrayBuf);
-
     const srcSheet = wb.getWorksheet('元');
     if (!srcSheet) throw new Error('「元」シートが見つかりません');
-
     const sheetName = dateVal.replace(/-/g, '');
     const newSheet = wb.addWorksheet(sheetName);
-
-    srcSheet.columns.forEach((col, i) => {
-      if (col.width) newSheet.getColumn(i + 1).width = col.width;
-    });
-
+    srcSheet.columns.forEach((col, i) => { if (col.width) newSheet.getColumn(i + 1).width = col.width; });
     srcSheet.eachRow({ includeEmpty: true }, (row, rowNum) => {
       const newRow = newSheet.getRow(rowNum);
       if (row.height) newRow.height = row.height;
       row.eachCell({ includeEmpty: true }, (cell, colNum) => {
         const newCell = newRow.getCell(colNum);
         newCell.style = JSON.parse(JSON.stringify(cell.style));
-        if (cell.type !== ExcelJS.ValueType.Merge) {
-          newCell.value = cell.value;
-        }
+        if (cell.type !== ExcelJS.ValueType.Merge) newCell.value = cell.value;
       });
       newRow.commit();
     });
-
-    (srcSheet.model.merges || []).forEach(merge => {
-      try { newSheet.mergeCells(merge); } catch(e) {}
-    });
+    (srcSheet.model.merges || []).forEach(merge => { try { newSheet.mergeCells(merge); } catch(e) {} });
 
     const areaMap = {};
     window._lastRenderItems.forEach(r => {
@@ -850,16 +861,19 @@ window.exportExcel = async function() {
       newSheet.getRow(rowIdx).commit();
       written++;
     });
-
     if (written === 0) { showToast("一致する区名がありませんでした"); return; }
 
+    // 次回点検区（複数対応）
     const TANTO_NAME = "南\u3000元樹\u3000080-1484-5774";
-    const tomorrowAreas = [...new Set(
-      (window._lastRenderItems||[])
-        .map(r => (r.tomorrow||"").trim())
-        .filter(t => t && !["無し","なし","ナシ","無"].includes(t) && !/^無し?$/.test(t))
-    )];
-    tomorrowAreas.forEach(areaName => {
+    const NASHI = ["無し","なし","ナシ","無"];
+    const tomorrowSet = new Set();
+    window._lastRenderItems.forEach(r => {
+      normTomorrows(r).forEach(t => {
+        const trimmed = t.trim();
+        if (trimmed && !NASHI.includes(trimmed)) tomorrowSet.add(trimmed);
+      });
+    });
+    tomorrowSet.forEach(areaName => {
       const rowIdx = AREA_ROW_MAP[areaName];
       if (!rowIdx) return;
       const row = newSheet.getRow(rowIdx);
@@ -878,18 +892,16 @@ window.exportExcel = async function() {
     const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const filename = `稼働実績_${sheetName}.xlsx`;
+    const filename = "稼働実績_" + sheetName + ".xlsx";
     a.href = url; a.download = filename;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast(`${filename} をダウンロードしました`);
-
+    showToast(filename + " をダウンロードしました");
   } catch(e) {
     console.error(e);
     showToast('エラー: ' + (e.message || '生成に失敗しました'));
   }
-
   btn.disabled = false; btn.textContent = "Excel様式にエクスポート";
 };
 
