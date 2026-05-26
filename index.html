@@ -254,7 +254,7 @@
   </div>
 </div>
 
-<header>
+<header id="main-header" style="display:none;">
   <div style="display:flex;align-items:center;gap:6px;">
     <div>
       <div style="font-size:11px;opacity:0.75;letter-spacing:0.08em;margin-bottom:1px;font-weight:700;color:#a8d5b5;">堺総合サービス</div>
@@ -270,12 +270,12 @@
   </div>
 </header>
 
-<div class="tab-bar">
+<div class="tab-bar" id="main-tabbar" style="display:none;">
   <button class="tab-btn active" onclick="switchTab('input')">入力</button>
   <button class="tab-btn" onclick="switchTab('list')">一覧・集計</button>
 </div>
 
-<div id="page-input" class="page active">
+<div id="page-input" class="page active" style="display:none;">
   <div id="firebase-warning" class="firebase-warning" style="display:none">
     ⚠️ Firebase未設定のため、データは保存されません。firebaseConfigを設定してください。
   </div>
@@ -359,7 +359,7 @@
   <div style="height:24px"></div>
 </div>
 
-<div id="page-list" class="page">
+<div id="page-list" class="page" style="display:none;">
   <div class="date-nav">
     <input type="date" id="list-date" onchange="loadList()">
     <button onclick="goToday()">今日</button>
@@ -426,6 +426,9 @@ onAuthStateChanged(auth, user => {
     const info = COMPANY_MAP[user.email] || { companyId: user.uid, companyName: user.email, isAdmin: false };
     currentUser = { uid: user.uid, email: user.email, ...info };
     document.getElementById("login-screen").classList.remove("active");
+    document.getElementById("main-header").style.display = "";
+    document.getElementById("main-tabbar").style.display = "";
+    document.getElementById("page-input").style.display = "";
     document.getElementById("company-badge").textContent = currentUser.companyName;
     document.querySelectorAll(".admin-only").forEach(el => {
       el.style.display = currentUser.isAdmin ? "block" : "none";
@@ -434,6 +437,10 @@ onAuthStateChanged(auth, user => {
   } else {
     currentUser = null;
     document.getElementById("login-screen").classList.add("active");
+    document.getElementById("main-header").style.display = "none";
+    document.getElementById("main-tabbar").style.display = "none";
+    document.getElementById("page-input").style.display = "none";
+    document.getElementById("page-list").style.display = "none";
     if (currentListener) { currentListener(); currentListener = null; }
   }
 });
