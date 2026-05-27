@@ -496,6 +496,8 @@ window.switchTab = function(tab) {
   document.querySelectorAll(".tab-btn").forEach((b,i) => b.classList.toggle("active",(i===0)===(tab==="input")));
   document.getElementById("page-input").classList.toggle("active", tab==="input");
   document.getElementById("page-list").classList.toggle("active", tab==="list");
+  document.getElementById("page-input").style.display = tab==="input" ? "" : "none";
+  document.getElementById("page-list").style.display  = tab==="list"  ? "" : "none";
   if (tab==="list") loadList();
 };
 
