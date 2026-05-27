@@ -661,7 +661,10 @@ window.loadList = function() {
       snap.forEach(compSnap => {
         compSnap.forEach(c => {
           const v = c.val();
-          if (v.date === date) items.push({key:c.key, companyId:compSnap.key, ...v});
+          if (v.date === date) {
+            const cInfo = Object.values(COMPANY_MAP).find(m => m.companyId === compSnap.key);
+            items.push({key:c.key, companyId:compSnap.key, companyName: cInfo ? cInfo.companyName : compSnap.key, ...v});
+          }
         });
       });
       items.sort((a,b)=>a.updatedAt-b.updatedAt);
@@ -673,7 +676,7 @@ window.loadList = function() {
       const items = [];
       snap.forEach(c => {
         const v = c.val();
-        if (v.date === date) items.push({key:c.key, companyId, ...v});
+        if (v.date === date) items.push({key:c.key, companyId, companyName: currentUser.companyName, ...v});
       });
       items.sort((a,b)=>a.updatedAt-b.updatedAt);
       renderList(items);
@@ -777,7 +780,10 @@ function renderList(items) {
     ).join("");
     return '<div class="record-item">'
       + '<div class="record-header">'
+      + '<div style="display:flex;align-items:center;gap:8px;">'
       + '<div class="record-name">' + esc(r.name) + '</div>'
+      + (r.companyName ? '<span style="font-size:11px;background:#EAF5EE;color:#1E7A42;border:1px solid #B8DFC2;border-radius:10px;padding:2px 8px;font-weight:500;">' + esc(r.companyName) + '</span>' : '')
+      + '</div>'
       + '<div class="record-actions">'
       + '<button class="btn-edit" onclick="openEdit(\'' + r.key + '\')">編集</button>'
       + '<button class="btn-del" onclick="deleteRecord(\'' + r.key + '\')">削除</button>'
