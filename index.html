@@ -2,808 +2,1110 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="点検日報">
-<meta name="theme-color" content="#0F5229">
+<meta name="apple-mobile-web-app-title" content="緊急報告">
+<meta name="theme-color" content="#00489d">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<title>稼働報告アプリ</title>
+<title>緊急報告アプリ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --grn-50: #EAF5EE; --grn-100: #B8DFC2; --grn-200: #7EC496;
-    --grn-400: #3A9E5F; --grn-600: #1E7A42; --grn-800: #0F5229; --grn-900: #073318;
-    --gray-50: #F1EFE8; --gray-100: #D3D1C7; --gray-200: #B4B2A9;
-    --gray-400: #888780; --gray-600: #5F5E5A; --gray-800: #444441;
-  }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif;
-    font-size: 16px; background: #f0f5f2; color: #1a1a1a; min-height: 100vh;
-  }
-  header {
-    background: var(--grn-800); color: white; padding: 10px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  }
-  header h1 { font-size: 18px; font-weight: 500; }
-  header span { font-size: 13px; opacity: 0.8; }
-  .tab-bar {
-    display: flex; background: var(--grn-800); border-bottom: 2px solid var(--grn-600);
-    position: fixed; top: 0; left: 0; right: 0; z-index: 99;
-  }
-  .tab-btn {
-    flex: 1; padding: 12px 8px; border: none; background: none;
-    font-size: 15px; color: rgba(255,255,255,0.6); cursor: pointer;
-    border-bottom: 3px solid transparent; transition: all 0.2s;
-  }
-  .tab-btn.active { color: #fff; border-bottom-color: #fff; font-weight: 500; }
-  .page { display: none; padding: 12px; max-width: 600px; margin: 0 auto; }
-  .page.active { display: block; }
-  .card {
-    background: white; border-radius: 12px; padding: 14px 16px;
-    margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  }
-  .card-title {
-    font-size: 14px; font-weight: 500; color: var(--grn-800);
-    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--grn-50);
-  }
-  .form-group { margin-bottom: 12px; }
-  label { display: block; font-size: 14px; color: var(--gray-600); margin-bottom: 6px; font-weight: 500; }
-  label .required, .required { color: #e24b4a; margin-left: 4px; font-size: 12px; }
-  input[type="text"], input[type="date"], textarea {
-    width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px;
-    font-size: 16px; background: white; -webkit-appearance: none; transition: border 0.2s;
-  }
-  input[type="text"]:focus, input[type="date"]:focus, textarea:focus {
-    outline: none; border-color: var(--grn-400); box-shadow: 0 0 0 3px rgba(58,158,95,0.15);
-  }
-  textarea { resize: vertical; min-height: 80px; }
-  .area-block {
-    border: 1px solid #c2deca; border-radius: 10px; padding: 14px;
-    margin-bottom: 12px; background: #f4faf6;
-  }
-  .area-block-header {
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
-  }
-  .area-block-label {
-    font-size: 13px; font-weight: 500; color: var(--grn-600);
-    background: var(--grn-50); padding: 3px 10px; border-radius: 20px;
-  }
-  .btn-remove-area {
-    width: 28px; height: 28px; border-radius: 50%; border: 1px solid #f0b0b0;
-    background: white; color: #e24b4a; font-size: 18px; line-height: 1;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-  }
-  .btn-remove-area:active { background: #fef0f0; }
-  .count-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .count-item label { font-size: 13px; }
-  .count-input {
-    width: 100%; padding: 6px 4px; border: 1px solid #ddd; border-radius: 8px;
-    font-size: 18px; font-weight: 500; text-align: center; color: var(--grn-800);
-    background: white; -webkit-appearance: none;
-  }
-  .count-input:focus { outline: none; border-color: var(--grn-400); box-shadow: 0 0 0 3px rgba(58,158,95,0.15); }
-  /* 明日の点検区（複数） */
-  .tomorrow-input-row {
-    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-  }
-  .tomorrow-input-row input[type="text"] { flex: 1; }
-  .btn-remove-tomorrow {
-    width: 32px; height: 32px; border-radius: 50%; border: 1px solid #f0b0b0;
-    background: white; color: #e24b4a; font-size: 18px; line-height: 1;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .btn-remove-tomorrow:active { background: #fef0f0; }
-  .area-summary { margin-bottom: 12px; }
-  .area-summary-title {
-    font-size: 13px; font-weight: 500; color: var(--grn-800);
-    background: var(--grn-50); padding: 6px 12px;
-    border-radius: 8px 8px 0 0; border: 1px solid var(--grn-100); border-bottom: none;
-  }
-  .summary-table {
-    width: 100%; border-collapse: collapse;
-    border: 1px solid var(--grn-100); border-radius: 0 0 8px 8px;
-    font-size: 13px; background: white;
-  }
-  .summary-table th {
-    background: #edf7f1; color: var(--grn-800); font-weight: 500;
-    padding: 7px 6px; text-align: center;
-    border-bottom: 1px solid var(--grn-100); border-right: 1px solid var(--grn-100);
-  }
-  .summary-table th:last-child { border-right: none; }
-  .summary-table td {
-    padding: 7px 6px; text-align: center;
-    border-bottom: 1px solid #e4f0e8; border-right: 1px solid #e4f0e8; color: var(--gray-800);
-  }
-  .summary-table td:last-child { border-right: none; }
-  .summary-table td:first-child { text-align: left; font-weight: 500; color: var(--grn-800); padding-left: 10px; }
-  .summary-table tr:last-child td { border-bottom: none; font-weight: 500; background: #edf7f1; }
-  .summary-table .zero { color: var(--gray-200); }
-  .tomorrow-list {
-    border: 1px solid var(--grn-100); border-radius: 0 0 8px 8px;
-    background: white; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px;
-  }
-  .tomorrow-tag {
-    background: #eaf6ef; color: var(--grn-800); border: 1px solid var(--grn-100);
-    font-size: 14px; font-weight: 500; padding: 5px 14px; border-radius: 20px;
-  }
-  .btn-add-area {
-    width: 100%; padding: 12px; border: 2px dashed var(--grn-200);
-    background: var(--grn-50); color: var(--grn-600); border-radius: 10px;
-    font-size: 15px; cursor: pointer; transition: all 0.15s;
-  }
-  .btn-add-area:active { background: var(--grn-100); }
-  .btn-submit {
-    width: 100%; padding: 16px; background: var(--grn-600); color: white;
-    border: none; border-radius: 10px; font-size: 17px; font-weight: 500;
-    cursor: pointer; margin-top: 4px;
-  }
-  .btn-submit:active { background: var(--grn-800); }
-  .btn-submit:disabled { background: var(--gray-200); cursor: not-allowed; }
-  .date-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-  .date-nav input[type="date"] { flex: 1; padding: 10px 12px; font-size: 16px; }
-  .date-nav button {
-    padding: 10px 14px; border: 1px solid #ddd; background: white;
-    border-radius: 8px; font-size: 15px; cursor: pointer; color: var(--grn-600);
-  }
-  .record-item {
-    background: white; border-radius: 10px; padding: 14px 16px;
-    margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
-    border-left: 4px solid var(--grn-400);
-  }
-  .record-header {
-    display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px;
-  }
-  .record-name { font-size: 16px; font-weight: 500; color: var(--grn-800); }
-  .record-actions { display: flex; gap: 8px; flex-shrink: 0; margin-left: 8px; }
-  .btn-edit, .btn-del {
-    padding: 6px 12px; border-radius: 6px; font-size: 13px;
-    border: 1px solid; cursor: pointer; background: white;
-  }
-  .btn-edit { color: var(--grn-600); border-color: var(--grn-200); }
-  .btn-del { color: #e24b4a; border-color: #f0b0b0; }
-  .area-section { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-  .area-tag {
-    display: inline-block; background: var(--grn-50); color: var(--grn-800);
-    font-size: 13px; font-weight: 500; padding: 3px 10px; border-radius: 20px; flex-shrink: 0;
-  }
-  .counts-row { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
-  .count-badge {
-    background: #f0f7f2; border-radius: 5px; padding: 3px 7px; font-size: 12px;
-    display: flex; align-items: center; gap: 3px;
-  }
-  .count-badge .cb-label { color: var(--gray-600); }
-  .count-badge .cb-val { color: var(--grn-800); font-weight: 500; }
-  .area-divider { border: none; border-top: 1px dashed #c8e0cf; margin: 8px 0; }
-  .record-note {
-    font-size: 13px; color: #5a4000; margin-top: 8px;
-    background: #fff8e6; border-left: 3px solid #e6ac00;
-    padding: 6px 10px; border-radius: 0 6px 6px 0;
-  }
-  .record-tomorrow { font-size: 13px; color: var(--gray-400); margin-top: 2px; }
-  .empty-msg { text-align: center; color: var(--gray-400); padding: 40px 20px; font-size: 15px; }
-  .modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    z-index: 200; align-items: flex-end; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: white; border-radius: 16px 16px 0 0; padding: 20px 20px 32px;
-    width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto;
-  }
-  .modal-title {
-    font-size: 16px; font-weight: 500; margin-bottom: 16px; color: var(--grn-800);
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .modal-close { font-size: 22px; background: none; border: none; cursor: pointer; color: var(--gray-400); }
-  .toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: #1a1a1a; color: white; padding: 12px 20px; border-radius: 8px;
-    font-size: 14px; z-index: 300; opacity: 0; transition: opacity 0.3s; pointer-events: none;
-  }
-  .toast.show { opacity: 1; }
-  .loading { text-align: center; color: var(--gray-400); padding: 20px; font-size: 14px; }
-  #login-screen { display:none; min-height:100vh; align-items:center; justify-content:center; flex-direction:column; padding:2rem; background:#f0f5f2; }
-  #login-screen.active { display:flex; }
-  .login-card { background:white; border-radius:16px; padding:2rem; width:100%; max-width:360px; box-shadow:0 2px 12px rgba(0,0,0,0.1); }
-  .login-logo { font-size:13px; color:var(--gray-400); text-align:center; margin-bottom:8px; }
-  .login-title { font-size:22px; font-weight:500; color:var(--grn-800); text-align:center; margin-bottom:2rem; }
-  .login-field { margin-bottom:14px; }
-  .login-field label { display:block; font-size:13px; color:var(--gray-600); margin-bottom:6px; font-weight:500; }
-  .login-field input { width:100%; padding:12px 14px; border:1px solid #ddd; border-radius:8px; font-size:16px; -webkit-appearance:none; }
-  .login-field input:focus { outline:none; border-color:var(--grn-400); box-shadow:0 0 0 3px rgba(58,158,95,0.15); }
-  .btn-login { width:100%; padding:14px; background:var(--grn-600); color:white; border:none; border-radius:8px; font-size:16px; font-weight:500; cursor:pointer; margin-top:8px; }
-  .btn-login:active { background:var(--grn-800); }
-  .login-error { font-size:13px; color:#e24b4a; text-align:center; margin-top:10px; min-height:18px; }
-  .company-badge { font-size:11px; background:rgba(255,255,255,0.2); border-radius:10px; padding:2px 8px; margin-left:8px; }
-  .btn-logout { font-size:12px; color:rgba(255,255,255,0.8); background:none; border:1px solid rgba(255,255,255,0.3); border-radius:6px; padding:4px 10px; cursor:pointer; }
-  .admin-only { display: none; }
-  .btn-export {
-    width: 100%; padding: 13px; background: white; color: var(--grn-600);
-    border: 2px solid var(--grn-400); border-radius: 10px; font-size: 15px;
-    font-weight: 500; cursor: pointer; margin-bottom: 14px; transition: all 0.15s;
-  }
-  .btn-export:active { background: var(--grn-50); }
-  .btn-export:disabled { color: var(--gray-400); border-color: var(--gray-200); cursor: not-allowed; }
-  .firebase-warning {
-    background: #fff8e6; border: 1px solid #f5c842; border-radius: 8px;
-    padding: 12px 14px; font-size: 13px; color: #8a6000; margin-bottom: 16px;
-  }
+  :root{--bg:#B7CDE3;--surface:#ffffff;--surface2:#e8eef5;--input:#f0f4f8;--border:#cbd5e1;--accent:#00489d;--accent2:#00489d;--green:#16a34a;--red:#dc2626;--amber:#dc2626;--text:#1e293b;--text3:#64748b;--mono:'Noto Sans Mono','JetBrains Mono',monospace;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;}
+
+  #login-screen{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;background:var(--bg);}
+  .login-logo{font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--accent);font-weight:500;margin-bottom:2rem;}
+  .login-title{font-size:22px;font-weight:700;margin-bottom:.5rem;text-align:center;color:var(--text);}
+  .login-sub{font-size:13px;color:var(--text3);margin-bottom:2.5rem;text-align:center;}
+  .login-card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem;}
+  .field{margin-bottom:1.2rem;}
+  .field label{display:block;font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--text3);text-transform:uppercase;margin-bottom:6px;}
+  .field input{width:100%;padding:12px 14px;background:var(--input);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color .2s;}
+  .field input:focus{border-color:var(--accent);}
+  .btn-primary{width:100%;padding:13px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+  .error-msg{font-size:12px;color:var(--red);margin-top:10px;text-align:center;min-height:18px;}
+
+  #main-app{display:none;min-height:100dvh;flex-direction:column;}
+  .app-header{background:#00489d;border-bottom:none;padding:12px 16px 0;position:sticky;top:0;z-index:100;}
+  .header-inner{max-width:580px;margin:0 auto;}
+  .header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .header-title{font-size:16px;font-weight:700;color:#fff;}
+  .header-sub{font-size:11px;letter-spacing:.08em;color:#e0f0ff;font-weight:500;font-family:var(--mono);}
+  .logout-btn{font-size:11px;color:#bfdbfe;background:none;border:1px solid #3b5fd4;border-radius:6px;padding:5px 10px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .tabs{display:flex;}
+  .tab{flex:1;padding:15px 0;background:none;border:none;border-bottom:2px solid transparent;color:#fff;font-size:13px;font-weight:500;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:opacity .05s;opacity:0.45;}
+  .tab.active{color:#fff;border-bottom-color:#fff;opacity:1;}
+  .tab-content{display:none;flex:1;padding:16px;}
+  .tab-content.active{display:block;}
+  .tab-inner{max-width:580px;margin:0 auto;}
+
+  .section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;}
+  .section-label{font-size:13px;font-weight:500;letter-spacing:.02em;color:var(--text);font-family:'Noto Sans JP',sans-serif;margin-bottom:10px;}
+  .kanri-wrap{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+  .kanri-input{flex:1;padding:11px 13px;background:var(--input);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;font-family:var(--mono);letter-spacing:.05em;outline:none;transition:border-color .2s;}
+  .kanri-input:focus{border-color:var(--accent);}
+  .kanri-input.ok{border-color:var(--green);}
+  .kanri-input.warn{border-color:var(--amber);}
+  .check-badge{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;transition:all .2s;}
+  .check-badge.ok{background:#dcfce7;color:var(--green);}
+  .check-badge.warn{background:#fef2f2;color:var(--amber);}
+  .check-badge.idle{background:var(--surface2);color:var(--text3);}
+  .kanri-status{font-size:11px;min-height:16px;font-family:var(--mono);}
+  .kanri-status.ok{color:var(--green);}
+  .kanri-status.warn{color:var(--amber);}
+  .auto-info{margin-top:10px;padding:10px 12px;background:#eff6ff;border-radius:8px;border-left:3px solid var(--accent);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .auto-info.hidden{display:none;}
+  .info-item label{font-size:9px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;font-family:var(--mono);display:block;margin-bottom:2px;}
+  .info-item span{font-size:12px;font-weight:500;color:var(--accent);}
+  .form-input{width:100%;padding:11px 13px;background:var(--input);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color .2s;}
+  .form-input:focus{border-color:var(--accent);}
+  select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;background-color:var(--input);}
+  .damage-wrap{display:flex;flex-direction:column;gap:8px;}
+
+  .fixed-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  .fixed-photo-slot{aspect-ratio:1;border-radius:10px;overflow:hidden;position:relative;cursor:pointer;border:1.5px dashed var(--border);background:var(--input);transition:border-color .15s;}
+  .fixed-photo-slot:active{border-color:var(--accent);}
+  .fixed-photo-slot.filled{border-style:solid;border-color:var(--green);}
+  .slot-empty{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text3);font-size:12px;font-weight:500;}
+  .slot-filled{width:100%;height:100%;position:relative;}
+  .slot-filled img{width:100%;height:100%;object-fit:cover;display:block;}
+  .slot-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.65);font-size:11px;font-weight:500;color:#fff;text-align:center;padding:4px 0;}
+  .slot-del{position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.6);border:none;border-radius:50%;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .slot-hint{font-size:10px;color:var(--text3);text-align:center;margin-bottom:12px;font-family:var(--mono);}
+
+  .extra-section-label{font-size:13px;font-weight:500;color:var(--text);font-family:'Noto Sans JP',sans-serif;margin-bottom:8px;border-top:1px solid var(--border);padding-top:12px;}
+  .extra-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;}
+  .extra-thumb{aspect-ratio:1;background:var(--input);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;}
+  .extra-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .extra-del{position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.6);border:none;border-radius:50%;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .extra-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);font-size:9px;color:#fff;text-align:center;padding:2px 0;}
+  .add-extra-btn{width:100%;padding:10px;background:var(--input);border:1.5px dashed var(--border);border-radius:8px;color:var(--text3);font-size:13px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+
+  .complete-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;align-items:center;justify-content:center;padding:1rem;}
+  .complete-overlay.open{display:flex;}
+  .complete-box{background:var(--surface);border:2px solid var(--green);border-radius:20px;padding:32px 24px;width:100%;max-width:320px;text-align:center;}
+  .complete-icon{width:60px;height:60px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;}
+  .complete-title{font-size:20px;font-weight:700;color:var(--green);margin-bottom:8px;}
+  .complete-kanri{font-family:var(--mono);font-size:13px;color:var(--text3);margin-bottom:20px;}
+  .complete-ok{width:100%;padding:13px;background:var(--green);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+
+  .submit-btn{width:100%;padding:15px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:16px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;margin-top:4px;transition:opacity .15s;}
+  .submit-btn:disabled{opacity:.35;cursor:not-allowed;}
+
+  .search-bar{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:10px;}
+  .search-bar input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px;font-family:'Noto Sans JP',sans-serif;}
+  .search-bar input::placeholder{color:var(--text3);}
+  .filter-row{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;}
+  .filter-btn{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--text3);font-size:11px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s;}
+  .filter-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .report-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;}
+  .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .card-kanri{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text);}
+  .card-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+  .card-date{font-size:11px;color:var(--text3);text-align:right;}
+  .card-badge{font-size:10px;padding:2px 8px;border-radius:10px;background:#dcfce7;color:#15803d;margin-top:3px;display:inline-block;}
+  .card-photos{display:flex;gap:5px;}
+  .card-photo{width:52px;height:40px;border-radius:6px;overflow:hidden;background:var(--bg);border:1px solid var(--border);flex-shrink:0;}
+  .card-photo img{width:100%;height:100%;object-fit:cover;}
+  .card-photo-more{width:52px;height:40px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);flex-shrink:0;font-family:var(--mono);}
+  .empty-state{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:13px;}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;padding:1rem;overflow-y:auto;}
+  .modal-overlay.open{display:flex;align-items:flex-start;justify-content:center;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:420px;padding:20px;margin:auto;}
+  .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .modal-title{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);}
+  .modal-close{width:30px;height:30px;background:var(--surface2);border:none;border-radius:50%;color:var(--text3);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .detail-row .key{color:var(--text3);}
+  .detail-row .val{color:var(--text);font-weight:500;text-align:right;}
+  .modal-photos{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px;}
+  .modal-photo{border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:var(--bg);}
+  .modal-photo img{width:100%;height:100%;object-fit:cover;display:block;}
+  .delete-btn{width:100%;margin-top:16px;padding:11px;background:none;border:1.5px solid var(--red);border-radius:8px;color:var(--red);font-size:13px;font-weight:500;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+
+  .confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center;padding:1rem;}
+  .confirm-overlay.open{display:flex;}
+  .confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:320px;text-align:center;}
+  .confirm-title{font-size:15px;font-weight:700;margin-bottom:8px;color:var(--text);}
+  .confirm-sub{font-size:12px;color:var(--text3);margin-bottom:20px;line-height:1.6;}
+  .confirm-btns{display:flex;gap:10px;}
+  .confirm-cancel{flex:1;padding:11px;background:none;border:1.5px solid var(--border);border-radius:8px;color:var(--text3);font-size:14px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+  .confirm-ok{flex:1;padding:11px;background:var(--red);border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px 20px;font-size:13px;color:#f8fafc;z-index:500;transition:transform .25s ease;white-space:nowrap;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .toast.error{background:#fef2f2;border-color:var(--red);color:var(--red);}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 
 <div id="login-screen">
+  <div class="login-logo">堺総合サービス</div>
+  <div class="login-title">緊急報告アプリ</div>
+  <div class="login-sub">FIELD INSPECTION SYSTEM</div>
   <div class="login-card">
-    <div class="login-logo">堺総合サービス</div>
-    <div class="login-title">稼働報告アプリ</div>
-    <div class="login-field">
-      <label>メールアドレス</label>
-      <input type="email" id="login-email" placeholder="example@email.com" autocomplete="email">
-    </div>
-    <div class="login-field">
-      <label>パスワード</label>
-      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
-    </div>
-    <button class="btn-login" onclick="doLogin()">ログイン</button>
-    <div class="login-error" id="login-error"></div>
+    <div class="field"><label>メールアドレス</label><input type="email" id="login-email" placeholder="example@email.com" autocomplete="email"></div>
+    <div class="field"><label>パスワード</label><input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn-primary" id="login-btn" onclick="doLogin()">ログイン</button>
+    <div class="error-msg" id="login-error"></div>
   </div>
 </div>
 
-<header id="main-header" style="display:none;">
-  <div style="display:flex;align-items:center;gap:6px;">
-    <div>
-      <div style="font-size:11px;opacity:0.75;letter-spacing:0.08em;margin-bottom:1px;font-weight:700;color:#a8d5b5;">堺総合サービス</div>
-      <h1 style="font-size:15px;">稼働報告アプリ</h1>
-    </div>
-    <span id="company-badge" class="company-badge"></span>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
-      <span id="header-date" style="font-size:11px;opacity:0.8;"></span>
-    </div>
-    <button class="btn-logout" onclick="doLogout()" style="font-size:11px;padding:3px 8px;">ログアウト</button>
-  </div>
-</header>
-
-<div class="tab-bar" id="main-tabbar" style="display:none;">
-  <button class="tab-btn active" onclick="switchTab('input')">入力</button>
-  <button class="tab-btn" onclick="switchTab('list')">一覧・集計</button>
-</div>
-
-<div id="page-input" class="page active" style="display:none;">
-  <div id="firebase-warning" class="firebase-warning" style="display:none">
-    ⚠️ Firebase未設定のため、データは保存されません。firebaseConfigを設定してください。
-  </div>
-
-  <div class="card">
-    <div class="form-group">
-      <label>日付<span class="required">必須</span></label>
-      <input type="date" id="inp-date">
-    </div>
-    <div class="form-group">
-      <label>担当者<span class="required">必須</span></label>
-      <input type="text" id="inp-name" placeholder="例：山田太郎">
+<div id="main-app">
+  <div class="app-header">
+    <div class="header-inner">
+      <div class="header-top">
+        <div><div class="header-sub">堺総合サービス</div><div class="header-title">緊急報告アプリ</div></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="font-size:10px;color:#bfdbfe;text-align:right;" id="header-user"></div>
+          <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" id="tab-shoot" onclick="switchTab('shoot')">
+          <img src="icon-camera.png" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;">撮影・登録
+        </button>
+        <button class="tab" id="tab-history" onclick="switchTab('history')">
+          <img src="icon-report.png" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;">過去の報告
+        </button>
+        <button class="tab" id="tab-export" onclick="switchTab('export')">
+          <img src="icon-export.png" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;">エクスポート
+        </button>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-title">点検区・実施件数<span class="required">必須</span></div>
-    <div id="area-blocks"></div>
-    <button class="btn-add-area" onclick="addAreaBlock('area-blocks','inp')">＋ 点検区を追加</button>
-  </div>
+  <div class="tab-content active" id="pane-shoot">
+  <div class="tab-inner">
 
-  <div class="card">
-    <div class="card-title">補足情報</div>
-    <div class="form-group">
-      <label>明日の点検区<span class="required">必須</span></label>
-      <div id="inp-tomorrow-list"></div>
-      <button class="btn-add-area" onclick="addTomorrowRow('inp-tomorrow-list','inp')" style="margin-top:4px">＋ 明日の点検区を追加</button>
+    <!-- テスト用日付（開発者向け） -->
+    <div style="background:var(--surface2);border:1px dashed #444;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0;">TEST DATE</span>
+      <input type="date" id="test-date" class="form-input" style="flex:1;padding:6px 10px;font-size:12px;" oninput="onTestDateChange()">
+      <span style="font-size:10px;color:var(--text3);font-family:var(--mono);" id="test-date-label">今日</span>
     </div>
-    <div class="form-group">
-      <label>備考（任意）</label>
-      <textarea id="inp-note" placeholder="特記事項など"></textarea>
+
+    <div class="section">
+      <div class="section-label">管理番号</div>
+      <div class="kanri-wrap">
+        <input type="text" class="kanri-input" id="kanri-input" placeholder="例：00A000000" oninput="onKanriInput()" autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="check-badge idle" id="check-badge">—</div>
+      </div>
+      <div class="kanri-status" id="kanri-status"></div>
+      <div class="auto-info hidden" id="auto-info">
+        <div class="info-item"><label>区名</label><span id="info-kumen">-</span></div>
+        <div class="info-item"><label>種別</label><span id="info-shubetsu">-</span></div>
+        <div class="info-item"><label>図面番号</label><span id="info-zumen">-</span></div>
+      </div>
     </div>
-  </div>
 
-  <button class="btn-submit" id="submit-btn" onclick="submitRecord()">送信する</button>
-  <div style="height:24px"></div>
-</div>
+    <div class="section">
+      <div class="section-label">担当者名</div>
+      <input type="text" class="form-input" id="tanto-input" placeholder="氏名を入力">
+    </div>
 
-<div id="page-list" class="page" style="display:none;">
-  <div class="date-nav">
-    <input type="date" id="list-date" onchange="loadList()">
-    <button onclick="goToday()">今日</button>
-  </div>
-  <div id="list-container"><div class="loading">読み込み中...</div></div>
-  <button class="btn-export admin-only" id="export-btn" onclick="exportExcel()" disabled>Excel様式にエクスポート</button>
-</div>
+    <div class="section">
+      <div class="section-label">損傷種類</div>
+      <div class="damage-wrap">
+        <select class="form-input" id="damage-select" onchange="onDamageSelect()">
+          <option value="">選択してください</option>
+          <option value="穴あき">穴あき</option>
+          <option value="灯具本体ガラス割れ">灯具本体ガラス割れ</option>
+          <option value="開口部開き">開口部開き</option>
+          <option value="その他">その他（自由入力）</option>
+        </select>
+        <input type="text" class="form-input" id="damage-free" placeholder="損傷内容を入力" style="display:none;">
+      </div>
+    </div>
 
-<div class="modal-overlay" id="edit-modal">
+    <div class="section">
+      <div class="section-label">撮影写真</div>
+
+      <!-- 必須3枚 -->
+      <div class="fixed-photo-grid">
+        <div class="fixed-photo-slot" id="slot-0" onclick="pickSlot(0)">
+          <div class="slot-empty">
+            <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><rect x="0.5" y="2.5" width="21" height="15" rx="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="11" r="3.5" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 2.5l1.5-2h4l1.5 2" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+            <span>管理番号札</span>
+          </div>
+        </div>
+        <div class="fixed-photo-slot" id="slot-1" onclick="pickSlot(1)">
+          <div class="slot-empty">
+            <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><rect x="0.5" y="2.5" width="21" height="15" rx="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="11" r="3.5" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 2.5l1.5-2h4l1.5 2" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+            <span>全景</span>
+          </div>
+        </div>
+        <div class="fixed-photo-slot" id="slot-2" onclick="pickSlot(2)">
+          <div class="slot-empty">
+            <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><rect x="0.5" y="2.5" width="21" height="15" rx="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="11" r="3.5" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 2.5l1.5-2h4l1.5 2" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+            <span>損傷箇所</span>
+          </div>
+        </div>
+      </div>
+      <div class="slot-hint" id="slot-hint">3枚すべて選択すると登録できます</div>
+
+      <!-- 追加写真 -->
+      <div class="extra-section-label">追加写真（任意）<span id="extra-count" style="font-weight:400;color:var(--text3);"></span></div>
+      <div class="extra-grid" id="extra-grid"></div>
+      <button class="add-extra-btn" onclick="document.getElementById('file-extra').click()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v6M4 7h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        補足写真を追加
+      </button>
+
+      <input type="file" id="file-slot" accept="image/*" style="display:none" onchange="onSlotPick(event)">
+      <input type="file" id="file-extra" accept="image/*" multiple style="display:none" onchange="onExtraPick(event)">
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="doSubmit()" disabled>緊急報告を登録</button>
+    <div style="height:24px;"></div>
+  </div><!-- tab-inner -->
+  </div><!-- pane-shoot -->
+
+  <div class="tab-content" id="pane-history">
+  <div class="tab-inner">
+    <div class="search-bar">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#64748b" stroke-width="1.3"/><path d="M11 11l3 3" stroke="#64748b" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <input type="text" id="search-input" placeholder="管理番号・担当者名で検索" oninput="filterHistory()">
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all',this)">すべて</button>
+      <button class="filter-btn" onclick="setFilter('today',this)">今日</button>
+      <button class="filter-btn" onclick="setFilter('week',this)">今週</button>
+      <button class="filter-btn" onclick="setFilter('month',this)">今月</button>
+    </div>
+    <div id="history-list"></div>
+    <div style="height:24px;"></div>
+  </div><!-- tab-inner -->
+  </div><!-- pane-history -->
+
+  <!-- エクスポートタブ -->
+  <div class="tab-content" id="pane-export">
+  <div class="tab-inner">
+    <div class="section">
+      <div class="section-label">エクスポート日付</div>
+      <input type="date" class="form-input" id="export-date" onchange="onExportDateChange()" style="width:100%;max-width:100%;">
+    </div>
+    <div class="section" id="export-preview-section" style="display:none;">
+      <div class="section-label">対象件数</div>
+      <div id="export-count" style="font-size:28px;font-weight:700;color:var(--accent2);font-family:var(--mono);padding:4px 0 12px;"></div>
+      <div id="export-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+    <div id="export-empty" style="display:none;" class="empty-state">この日付の報告はありません</div>
+    <button class="submit-btn" id="export-btn" onclick="doExport()" disabled style="background:#059669;">Excelをダウンロード</button>
+    <div style="height:24px;"></div>
+  </div><!-- tab-inner -->
+  </div><!-- pane-export -->
+
+</div><!-- main-app -->
+
+<!-- 詳細モーダル -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal">
-    <div class="modal-title">
-      記録を編集
-      <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-kanri">-</div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
     </div>
-    <div id="edit-area-blocks"></div>
-    <button class="btn-add-area" onclick="addAreaBlock('edit-area-blocks','edit')" style="margin-bottom:16px">＋ 点検区を追加</button>
-    <div class="form-group">
-      <label>明日の点検区<span class="required">必須</span></label>
-      <div id="edit-tomorrow-list"></div>
-      <button class="btn-add-area" onclick="addTomorrowRow('edit-tomorrow-list','edit')" style="margin-top:4px">＋ 明日の点検区を追加</button>
+    <div id="modal-details"></div>
+    <div class="modal-photos" id="modal-photos"></div>
+    <button class="delete-btn" id="modal-delete-btn" onclick="confirmDelete()">この報告を削除する</button>
+  </div>
+</div>
+
+<!-- 削除確認 -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title">この報告を削除しますか？</div>
+    <div class="confirm-sub" id="confirm-sub"></div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="closeConfirm()">キャンセル</button>
+      <button class="confirm-ok" onclick="execDelete()">削除する</button>
     </div>
-    <div class="form-group"><label>備考</label><textarea id="edit-note"></textarea></div>
-    <button class="btn-submit" onclick="saveEdit()">保存する</button>
+  </div>
+</div>
+
+<!-- 重複確認ダイアログ -->
+<div class="confirm-overlay" id="dup-confirm-overlay">
+  <div class="confirm-box">
+    <div style="font-size:28px;margin-bottom:8px;">⚠️</div>
+    <div class="confirm-title" style="color:var(--red);" id="dup-confirm-title">確認</div>
+    <div class="confirm-sub" id="dup-confirm-sub"></div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="closeDupConfirm()">戻る</button>
+      <button class="confirm-ok" style="background:var(--red);" onclick="submitForce()">このまま登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 登録完了モーダル -->
+<div class="complete-overlay" id="complete-overlay">
+  <div class="complete-box">
+    <div class="complete-icon">✓</div>
+    <div class="complete-title">登録完了しました！</div>
+    <div class="complete-kanri" id="complete-kanri"></div>
+    <button class="complete-ok" onclick="closeComplete()">OK</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, push, set, remove, onValue }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getDatabase, ref, push, get, remove }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA4bnxODVw2lDyi2DT1uaxfHq4jcWh5uew",
-  authDomain: "jisseki-houkoku.firebaseapp.com",
-  databaseURL: "https://jisseki-houkoku-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "jisseki-houkoku",
-  storageBucket: "jisseki-houkoku.firebasestorage.app",
-  messagingSenderId: "558192827490",
-  appId: "1:558192827490:web:a75463f4101886cc45c53b"
+  apiKey: "AIzaSyCDwmBGAKj0v_qBAQ802uIlsU2Es00VCfk",
+  authDomain: "kinnkyu-houkoku.firebaseapp.com",
+  databaseURL: "https://kinnkyu-houkoku-default-rtdb.firebaseio.com",
+  projectId: "kinnkyu-houkoku",
+  storageBucket: "kinnkyu-houkoku.firebasestorage.app",
+  messagingSenderId: "365786088586",
+  appId: "1:365786088586:web:21a6656f4df025c4ca1973"
 };
 
-let db = null, auth = null, editingKey = null, currentListener = null;
-let currentUser = null;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+window._auth=auth; window._db=db; window._dbRef=ref;
+window._push=push; window._get=get; window._remove=remove;
+window._signIn=signInWithEmailAndPassword; window._signOut=signOut;
 
+// 会社・権限設定
+const ADMIN_EMAIL = 'kitaguchi@sakaiss.com';
 const COMPANY_MAP = {
-  "kitaguchi@sakaiss.com":  { companyId: "sakai",   companyName: "堺総合サービス", isAdmin: true },
-  "shingaki@sakaiss.com":   { companyId: "trieze",  companyName: "トリエズ",       isAdmin: false },
+  'kitaguchi@sakaiss.com': 'sakai',
+  'shingaki@sakaiss.com':  'toriez',
 };
 
-try {
-  const app = initializeApp(firebaseConfig);
-  db   = getDatabase(app);
-  auth = getAuth(app);
-} catch(e) {
-  document.getElementById("firebase-warning").style.display = "block";
+const COMPANY_NAMES = {
+  'sakai':  '堺総合サービス',
+  'toriez': 'トリエズ',
+};
+
+function getCompanyName(companyId) {
+  return COMPANY_NAMES[companyId] || companyId || '-';
 }
+window.getCompanyName = getCompanyName;
 
 onAuthStateChanged(auth, user => {
   if (user) {
-    const info = COMPANY_MAP[user.email] || { companyId: user.uid, companyName: user.email, isAdmin: false };
-    currentUser = { uid: user.uid, email: user.email, ...info };
-    document.getElementById("login-screen").classList.remove("active");
-    document.getElementById("main-header").style.display = "";
-    document.getElementById("main-tabbar").style.display = "";
-    document.getElementById("page-input").style.display = "";
-    document.getElementById("company-badge").textContent = currentUser.companyName;
-    document.querySelectorAll(".admin-only").forEach(el => {
-      el.style.display = currentUser.isAdmin ? "block" : "none";
-    });
-    adjustLayout();
+    window._currentUser    = user;
+    window._currentEmail   = user.email;
+    window._currentCompany = COMPANY_MAP[user.email] || user.email;
+    window._isAdmin        = user.email === ADMIN_EMAIL;
+
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'flex';
+
+    // エクスポートタブは管理者のみ表示
+    document.getElementById('tab-export').style.display = window._isAdmin ? '' : 'none';
+
+    // ヘッダーにユーザー情報表示
+    const userEl = document.getElementById('header-user');
+    if (userEl) {
+      userEl.textContent = window._isAdmin ? '管理者' : (COMPANY_MAP[user.email] === 'toriez' ? 'トリエズ' : user.email);
+    }
+
+    autoCleanOldPhotos();
+    loadHistory();
   } else {
-    currentUser = null;
-    document.getElementById("login-screen").classList.add("active");
-    document.getElementById("main-header").style.display = "none";
-    document.getElementById("main-tabbar").style.display = "none";
-    document.getElementById("page-input").style.display = "none";
-    document.getElementById("page-list").style.display = "none";
-    if (currentListener) { currentListener(); currentListener = null; }
+    window._currentUser    = null;
+    window._currentEmail   = null;
+    window._currentCompany = null;
+    window._isAdmin        = false;
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('main-app').style.display = 'none';
   }
 });
+</script>
 
-window.doLogin = async function() {
-  const email = document.getElementById("login-email").value.trim();
-  const pass  = document.getElementById("login-pass").value;
-  const btn   = document.querySelector(".btn-login");
-  const err   = document.getElementById("login-error");
-  if (!email || !pass) { err.textContent = "メールアドレスとパスワードを入力してください"; return; }
-  btn.textContent = "ログイン中..."; btn.disabled = true; err.textContent = "";
-  try {
-    await signInWithEmailAndPassword(auth, email, pass);
-  } catch(e) {
-    const msg = {
-      "auth/invalid-credential":    "メールアドレスまたはパスワードが違います",
-      "auth/user-not-found":        "このメールアドレスは登録されていません",
-      "auth/wrong-password":        "パスワードが違います",
-      "auth/invalid-email":         "メールアドレスの形式が正しくありません",
-      "auth/too-many-requests":     "試行回数が多すぎます。しばらく待ってから再試行してください",
-      "auth/network-request-failed":"ネットワークエラーが発生しました",
-    }[e.code] || "エラー: " + e.code;
-    err.textContent = msg;
-    btn.textContent = "ログイン"; btn.disabled = false;
+<script>
+let masterData = {};
+fetch('masterdata.json').then(r => r.json()).then(d => { masterData = d; });
+
+const SLOT_NAMES = ['管理番号札', '全景', '損傷箇所'];
+let slotPhotos = [null, null, null];
+let extraPhotos = [];
+let currentSlot = -1;
+let historyData = [];
+let currentFilter = 'all';
+let deleteTargetId = null;
+let testDateOverride = null; // テスト用日付オーバーライド
+
+// ===== テスト日付 =====
+function onTestDateChange() {
+  const val = document.getElementById('test-date').value;
+  const label = document.getElementById('test-date-label');
+  if (val) {
+    testDateOverride = val;
+    label.textContent = val + ' (テスト中)';
+    label.style.color = 'var(--amber)';
+  } else {
+    testDateOverride = null;
+    label.textContent = '今日';
+    label.style.color = 'var(--text3)';
   }
-};
-document.addEventListener("keydown", e => {
-  if (e.key === "Enter" && document.getElementById("login-screen").classList.contains("active")) doLogin();
-});
-window.doLogout = async function() { await signOut(auth); };
-
-function todayStr() { return new Date().toISOString().slice(0,10); }
-
-function adjustLayout() {
-  const header = document.querySelector('header');
-  const tabBar = document.querySelector('.tab-bar');
-  const pages  = document.querySelectorAll('.page');
-  const hh = header.offsetHeight;
-  const th = tabBar.offsetHeight;
-  tabBar.style.top = hh + 'px';
-  pages.forEach(p => p.style.paddingTop = (hh + th + 12) + 'px');
-}
-adjustLayout();
-window.addEventListener('resize', adjustLayout);
-document.getElementById("inp-date").value = todayStr();
-document.getElementById("list-date").value = todayStr();
-document.getElementById("header-date").textContent =
-  new Date().toLocaleDateString("ja-JP", {month:"short",day:"numeric",weekday:"short"});
-
-window.goToday = () => { document.getElementById("list-date").value = todayStr(); loadList(); };
-
-window.switchTab = function(tab) {
-  document.querySelectorAll(".tab-btn").forEach((b,i) => b.classList.toggle("active",(i===0)===(tab==="input")));
-  document.getElementById("page-input").classList.toggle("active", tab==="input");
-  document.getElementById("page-list").classList.toggle("active", tab==="list");
-  document.getElementById("page-input").style.display = tab==="input" ? "" : "none";
-  document.getElementById("page-list").style.display  = tab==="list"  ? "" : "none";
-  if (tab==="list") loadList();
-};
-
-// ---- 点検区ブロック ----
-let blockSeq = 0;
-
-function makeBlockHtml(uid, idx, areaVal, k, e, d1, d2, removable) {
-  const rmBtn = removable
-    ? '<button class="btn-remove-area" onclick="removeBlock(\'' + uid + '\')">×</button>'
-    : "";
-  return '<div class="area-block" id="block-' + uid + '">'
-    + '<div class="area-block-header">'
-    + '<span class="area-block-label">点検区 ' + (idx+1) + '</span>'
-    + rmBtn
-    + '</div>'
-    + '<div class="form-group" style="margin-bottom:12px">'
-    + '<input type="text" id="aname-' + uid + '" placeholder="例：都島区" value="' + esc(areaVal) + '">'
-    + '</div>'
-    + '<div class="count-grid">'
-    + ci("近接点検", "ck-" + uid, k)
-    + ci("遠方点検", "ce-" + uid, e)
-    + ci("詳細点検1", "cd1-" + uid, d1)
-    + ci("詳細点検2", "cd2-" + uid, d2)
-    + '</div></div>';
 }
 
-function ci(label, id, val) {
-  return '<div class="count-item">'
-    + '<label style="font-size:12px;margin-bottom:3px">' + label + '</label>'
-    + '<input type="number" class="count-input" id="' + id + '" value="' + val + '" min="0" inputmode="numeric"'
-    + ' onfocus="if(this.value===\'0\')this.value=\'\'"'
-    + ' onblur="if(this.value===\'\')this.value=\'0\'">'
-    + '</div>';
+function getNow() {
+  // テスト日付が設定されていればそれを使う
+  if (testDateOverride) {
+    return new Date(testDateOverride + 'T12:00:00+09:00');
+  }
+  return new Date();
 }
 
-window.addAreaBlock = function(containerId, prefix) {
-  const container = document.getElementById(containerId);
-  const idx = container.querySelectorAll(".area-block").length;
-  const uid = prefix + "-" + (++blockSeq);
-  container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, idx, "", 0,0,0,0, idx>0));
-};
-
-window.removeBlock = function(uid) {
-  const block = document.getElementById("block-"+uid);
-  if (!block) return;
-  const container = block.parentElement;
-  block.remove();
-  container.querySelectorAll(".area-block-label").forEach((el,i) => el.textContent = "点検区 " + (i+1));
-};
-
-function collectBlocks(containerId) {
-  return Array.from(document.querySelectorAll("#" + containerId + " .area-block")).map(b => {
-    const uid = b.id.replace("block-","");
-    return {
-      areaName: (document.getElementById("aname-" + uid)?.value||"").trim(),
-      kinsetsu: parseInt(document.getElementById("ck-" + uid)?.value)||0,
-      enpo:     parseInt(document.getElementById("ce-" + uid)?.value)||0,
-      detail1:  parseInt(document.getElementById("cd1-" + uid)?.value)||0,
-      detail2:  parseInt(document.getElementById("cd2-" + uid)?.value)||0,
-    };
-  });
+function toJSTISOString(date) {
+  // JSTオフセット(+09:00)込みのISO文字列を返す
+  const jst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  const str = jst.toISOString().replace('Z', '+09:00');
+  return str;
 }
 
-// ---- 明日の点検区（複数） ----
-let tomorrowSeq = 0;
-
-window.addTomorrowRow = function(containerId, prefix, value) {
-  value = value || "";
-  const container = document.getElementById(containerId);
-  const uid = "tm-" + prefix + "-" + (++tomorrowSeq);
-  const isFirst = container.querySelectorAll(".tomorrow-input-row").length === 0;
-  const rmBtn = isFirst ? "" : '<button class="btn-remove-tomorrow" onclick="removeTomorrowRow(\'' + uid + '\')">×</button>';
-  container.insertAdjacentHTML("beforeend",
-    '<div class="tomorrow-input-row" id="' + uid + '">'
-    + '<input type="text" placeholder="例：都島区（稼働なしの場合は「無し」）" value="' + esc(value) + '">'
-    + rmBtn
-    + '</div>');
-};
-
-window.removeTomorrowRow = function(uid) {
-  document.getElementById(uid)?.remove();
-};
-
-function collectTomorrowRows(containerId) {
-  return Array.from(document.querySelectorAll("#" + containerId + " .tomorrow-input-row input"))
-    .map(el => el.value.trim())
-    .filter(v => v !== "");
-}
-
-function resetTomorrowRows(containerId, prefix) {
-  document.getElementById(containerId).innerHTML = "";
-  addTomorrowRow(containerId, prefix);
-}
-
-function fillTomorrowRows(containerId, prefix, values) {
-  document.getElementById(containerId).innerHTML = "";
-  const arr = Array.isArray(values) ? values : (values ? [values] : []);
-  if (arr.length === 0) { addTomorrowRow(containerId, prefix); return; }
-  arr.forEach(v => addTomorrowRow(containerId, prefix, v));
-}
-
-// 旧データ（tomorrow: string）と新データ（tomorrows: array）両対応
-function normTomorrows(r) {
-  if (r.tomorrows && Array.isArray(r.tomorrows)) return r.tomorrows;
-  if (r.tomorrow) return [r.tomorrow];
-  return [];
-}
-
-// 初期化
-(function() {
-  const uid = "inp-" + (++blockSeq);
-  document.getElementById("area-blocks").insertAdjacentHTML(
-    "beforeend", makeBlockHtml(uid, 0, "", 0,0,0,0, false));
-  addTomorrowRow("inp-tomorrow-list", "inp");
-})();
-
-// ---- 送信 ----
-window.submitRecord = async function() {
-  const date = document.getElementById("inp-date").value;
-  const name = document.getElementById("inp-name").value.trim();
-  if (!date||!name) { showToast("日付と点検者名は必須です"); return; }
-  const areas = collectBlocks("area-blocks");
-  if (!areas.length || areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
-  const tomorrows = collectTomorrowRows("inp-tomorrow-list");
-  if (!tomorrows.length) { showToast("明日の点検区を入力してください"); return; }
-  if (!db) { showToast("Firebase未設定のため保存できません"); return; }
-  const btn = document.getElementById("submit-btn");
-  btn.disabled=true; btn.textContent="送信中...";
+// ===== 自動クリーンアップ（3日以上前の写真を削除） =====
+async function autoCleanOldPhotos() {
   try {
-    const companyId = currentUser?.companyId || "unknown";
-    await push(ref(db,"records/"+companyId), {
-      date, name, areas,
-      note:      document.getElementById("inp-note").value.trim(),
-      tomorrows,
-      updatedAt: Date.now()
-    });
-    showToast("送信しました！");
-    const c = document.getElementById("area-blocks");
-    c.innerHTML = "";
-    const uid = "inp-" + (++blockSeq);
-    c.insertAdjacentHTML("beforeend", makeBlockHtml(uid,0,"",0,0,0,0,false));
-    document.getElementById("inp-note").value = "";
-    resetTomorrowRows("inp-tomorrow-list", "inp");
-    document.getElementById("list-date").value = date;
-    switchTab("list");
-  } catch(e) { showToast("送信エラー: "+e.message); }
-  btn.disabled=false; btn.textContent="送信する";
-};
+    const snap = await window._get(window._dbRef(window._db, 'reports'));
+    if (!snap.exists()) return;
 
-// ---- 一覧 ----
-window.loadList = function() {
-  const date = document.getElementById("list-date").value;
-  if (!date) return;
-  const container = document.getElementById("list-container");
-  container.innerHTML = '<div class="loading">読み込み中...</div>';
-  if (!db) { container.innerHTML='<div class="empty-msg">Firebase未設定</div>'; return; }
-  if (currentListener) currentListener();
-  if (currentUser?.isAdmin) {
-    currentListener = onValue(ref(db,"records"), snap => {
-      const items = [];
-      snap.forEach(compSnap => {
-        compSnap.forEach(c => {
-          const v = c.val();
-          if (v.date === date) {
-            const cInfo = Object.values(COMPANY_MAP).find(m => m.companyId === compSnap.key);
-            items.push({key:c.key, companyId:compSnap.key, companyName: cInfo ? cInfo.companyName : compSnap.key, ...v});
-          }
+    const now = new Date();
+    const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+    let deletedCount = 0;
+
+    const promises = [];
+    snap.forEach(item => {
+      const r = item.val();
+      const d = new Date(r.datetime);
+      if (d < threeDaysAgo && r.photoKeys && r.photoKeys.length > 0) {
+        // 写真データを削除
+        r.photoKeys.forEach(key => {
+          promises.push(window._remove(window._dbRef(window._db, 'photos/' + key)));
         });
-      });
-      items.sort((a,b)=>a.updatedAt-b.updatedAt);
-      renderList(items);
+        // reportsのphotoKeysを空にする（reportは残す）
+        promises.push(
+          window._get(window._dbRef(window._db, 'reports/' + item.key + '/photoKeys'))
+            .then(() => window._remove(window._dbRef(window._db, 'reports/' + item.key + '/photoKeys')))
+        );
+        deletedCount++;
+      }
     });
-  } else {
-    const companyId = currentUser?.companyId || "unknown";
-    currentListener = onValue(ref(db,"records/"+companyId), snap => {
-      const items = [];
-      snap.forEach(c => {
-        const v = c.val();
-        if (v.date === date) items.push({key:c.key, companyId, companyName: currentUser.companyName, ...v});
-      });
-      items.sort((a,b)=>a.updatedAt-b.updatedAt);
-      renderList(items);
-    });
+
+    await Promise.all(promises);
+    if (deletedCount > 0) {
+      console.log(`自動クリーン: ${deletedCount}件の写真データを削除しました`);
+    }
+  } catch(e) {
+    console.warn('自動クリーン失敗:', e.message);
   }
-};
-
-function normAreas(r) {
-  if (r.areas && Array.isArray(r.areas)) return r.areas;
-  return [{areaName:r.area||"", kinsetsu:r.kinsetsu||0, enpo:r.enpo||0, detail1:r.detail1||0, detail2:r.detail2||0}];
 }
 
-function renderList(items) {
-  window._lastRenderItems = items;
-  document.getElementById("export-btn").disabled = items.length === 0;
-  const container = document.getElementById("list-container");
-  if (!items.length) { container.innerHTML='<div class="empty-msg">この日のデータはありません</div>'; return; }
-
-  const areaMap = {};
-  items.forEach(r => normAreas(r).forEach(a => {
-    const k = a.areaName || "（区名なし）";
-    if (!areaMap[k]) areaMap[k] = {kinsetsu:0, enpo:0, detail1:0, detail2:0};
-    areaMap[k].kinsetsu += a.kinsetsu||0;
-    areaMap[k].enpo     += a.enpo||0;
-    areaMap[k].detail1  += a.detail1||0;
-    areaMap[k].detail2  += a.detail2||0;
-  }));
-
-  const totals = {kinsetsu:0, enpo:0, detail1:0, detail2:0};
-  Object.values(areaMap).forEach(v => {
-    totals.kinsetsu+=v.kinsetsu; totals.enpo+=v.enpo;
-    totals.detail1+=v.detail1;  totals.detail2+=v.detail2;
+// 画像圧縮
+function compressImage(dataUrl, maxSize=900, quality=0.75) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > h && w > maxSize) { h = h * maxSize / w; w = maxSize; }
+      else if (h > maxSize) { w = w * maxSize / h; h = maxSize; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
   });
-
-  const AREA_ORDER = [
-    "都島区","福島区","此花区","西区","港区","大正区","天王寺区","浪速区",
-    "西淀川区","東淀川区","東成区","生野区","旭区","城東区","阿倍野区","住吉区",
-    "東住吉区","西成区","淀川区","鶴見区","住之江区","平野区","北区","中央区"
-  ];
-
-  function cell(n) { return '<td class="' + (n===0?'zero':'') + '">' + n + '</td>'; }
-
-  const sortedEntries = [
-    ...AREA_ORDER.filter(k => areaMap[k]).map(k => [k, areaMap[k]]),
-    ...Object.entries(areaMap).filter(([k]) => !AREA_ORDER.includes(k))
-  ];
-
-  const rows = sortedEntries.map(([name, v]) =>
-    '<tr><td>' + esc(name) + '</td>'
-    + cell(v.kinsetsu) + cell(v.enpo) + cell(v.detail1) + cell(v.detail2)
-    + '<td>' + (v.kinsetsu+v.enpo+v.detail1+v.detail2) + '</td></tr>'
-  ).join("");
-
-  // 次回点検区：全レコードのtomorrowsを集約
-  const NASHI = ["無し","なし","ナシ","無"];
-  const tomorrowSet = new Set();
-  items.forEach(r => {
-    normTomorrows(r).forEach(t => {
-      const trimmed = t.trim();
-      if (trimmed && !NASHI.includes(trimmed)) tomorrowSet.add(trimmed);
-    });
-  });
-  const tomorrowAreas = [
-    ...AREA_ORDER.filter(k => tomorrowSet.has(k)),
-    ...[...tomorrowSet].filter(k => !AREA_ORDER.includes(k))
-  ];
-
-  const tomorrowHtml = '<div class="area-summary">'
-    + '<div class="area-summary-title">次回点検区</div>'
-    + '<div class="tomorrow-list">'
-    + (tomorrowAreas.length
-        ? tomorrowAreas.map(t => '<span class="tomorrow-tag">' + esc(t) + '</span>').join("")
-        : '<span style="font-size:13px;color:var(--gray-400)">データなし</span>')
-    + '</div></div>';
-
-  const summaryHtml = '<div class="area-summary">'
-    + '<div class="area-summary-title">区別集計</div>'
-    + '<table class="summary-table"><thead><tr>'
-    + '<th>点検区</th><th>近接</th><th>遠方</th><th>詳細1</th><th>詳細2</th><th>合計</th>'
-    + '</tr></thead><tbody>'
-    + rows
-    + '<tr><td>合計</td>'
-    + cell(totals.kinsetsu) + cell(totals.enpo) + cell(totals.detail1) + cell(totals.detail2)
-    + '<td>' + (totals.kinsetsu+totals.enpo+totals.detail1+totals.detail2) + '</td></tr>'
-    + '</tbody></table></div>'
-    + tomorrowHtml;
-
-  const recordsHtml = items.map(r => {
-    const areas = normAreas(r);
-    const tomorrows = normTomorrows(r);
-    const aHtml = areas.map((a,i) =>
-      (i>0?'<hr class="area-divider">':'')
-      + '<div class="area-section">'
-      + '<span class="area-tag">' + esc(a.areaName) + '</span>'
-      + '<div class="counts-row">'
-      + '<div class="count-badge"><span class="cb-label">近接</span><span class="cb-val">' + (a.kinsetsu||0) + '</span></div>'
-      + '<div class="count-badge"><span class="cb-label">遠方</span><span class="cb-val">' + (a.enpo||0) + '</span></div>'
-      + '<div class="count-badge"><span class="cb-label">詳細1</span><span class="cb-val">' + (a.detail1||0) + '</span></div>'
-      + '<div class="count-badge"><span class="cb-label">詳細2</span><span class="cb-val">' + (a.detail2||0) + '</span></div>'
-      + '</div></div>'
-    ).join("");
-    return '<div class="record-item">'
-      + '<div class="record-header">'
-      + '<div style="display:flex;align-items:center;gap:8px;">'
-      + '<div class="record-name">' + esc(r.name) + '</div>'
-      + (r.companyName ? '<span style="font-size:11px;background:#EAF5EE;color:#1E7A42;border:1px solid #B8DFC2;border-radius:10px;padding:2px 8px;font-weight:500;">' + esc(r.companyName) + '</span>' : '')
-      + '</div>'
-      + '<div class="record-actions">'
-      + '<button class="btn-edit" onclick="openEdit(\'' + r.key + '\')">編集</button>'
-      + '<button class="btn-del" onclick="deleteRecord(\'' + r.key + '\')">削除</button>'
-      + '</div></div>'
-      + aHtml
-      + (r.note ? '<div class="record-note">📝 ' + esc(r.note) + '</div>' : '')
-      + (tomorrows.length ? '<div class="record-tomorrow">明日: ' + tomorrows.map(esc).join("、") + '</div>' : '')
-      + '</div>';
-  }).join("");
-
-  container.innerHTML = summaryHtml + recordsHtml;
 }
 
-// ---- 編集 ----
-window.openEdit = function(key) {
-  editingKey = key;
-  const cId = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===key)?.companyId || currentUser.companyId) : currentUser.companyId;
-  onValue(ref(db,"records/"+cId+"/"+key), snap => {
-    const r = snap.val(); if (!r) return;
-    const container = document.getElementById("edit-area-blocks");
-    container.innerHTML = "";
-    normAreas(r).forEach((a,i) => {
-      const uid = "edit-" + (++blockSeq);
-      container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, i, a.areaName, a.kinsetsu||0, a.enpo||0, a.detail1||0, a.detail2||0, i>0));
-    });
-    fillTomorrowRows("edit-tomorrow-list", "edit", normTomorrows(r));
-    document.getElementById("edit-note").value = r.note||"";
-  }, {onlyOnce:true});
-  document.getElementById("edit-modal").classList.add("open");
-};
+function readFile(file) {
+  return new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+}
 
-window.closeModal = function() {
-  document.getElementById("edit-modal").classList.remove("open");
-  editingKey = null;
-};
-
-window.saveEdit = async function() {
-  if (!editingKey||!db) return;
-  const areas = collectBlocks("edit-area-blocks");
-  if (areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
-  const tomorrows = collectTomorrowRows("edit-tomorrow-list");
-  if (!tomorrows.length) { showToast("明日の点検区を入力してください"); return; }
+// ログイン
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  if (!email || !pass) { err.textContent = 'メールアドレスとパスワードを入力してください'; return; }
+  btn.innerHTML = '<span class="spinner"></span>ログイン中...';
+  btn.disabled = true; err.textContent = '';
   try {
-    const cId2 = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===editingKey)?.companyId || currentUser.companyId) : currentUser.companyId;
-    const snap = await new Promise(res=>onValue(ref(db,"records/"+cId2+"/"+editingKey),res,{onlyOnce:true}));
-    await set(ref(db,"records/"+cId2+"/"+editingKey), {
-      ...snap.val(), areas, tomorrows,
-      note:      document.getElementById("edit-note").value.trim(),
-      updatedAt: Date.now()
+    await window._signIn(window._auth, email, pass);
+  } catch(e) {
+    err.textContent = 'メールアドレスまたはパスワードが違います';
+    btn.innerHTML = 'ログイン'; btn.disabled = false;
+  }
+}
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+async function doLogout() { await window._signOut(window._auth); }
+
+// タブ
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('pane-' + tab).classList.add('active');
+  if (tab === 'history') loadHistory();
+  if (tab === 'export') window.initExportDate && window.initExportDate();
+}
+
+// 管理番号
+let checkTimer = null;
+function onKanriInput() { clearTimeout(checkTimer); checkTimer = setTimeout(checkKanri, 400); }
+async function checkKanri() {
+  const val = document.getElementById('kanri-input').value.trim();
+  const badge = document.getElementById('check-badge');
+  const status = document.getElementById('kanri-status');
+  const autoInfo = document.getElementById('auto-info');
+  if (!val) {
+    badge.className='check-badge idle'; badge.textContent='—';
+    status.textContent=''; status.className='kanri-status';
+    autoInfo.classList.add('hidden'); return;
+  }
+  const master = masterData[val];
+  if (master) {
+    document.getElementById('info-kumen').textContent = master[2]||'-';
+    document.getElementById('info-shubetsu').textContent = master[1]||'-';
+    document.getElementById('info-zumen').textContent = master[0]||'-';
+    autoInfo.classList.remove('hidden');
+  } else { autoInfo.classList.add('hidden'); }
+  try {
+    const snap = await window._get(window._dbRef(window._db, 'reports'));
+    let dup = false;
+    if (snap.exists()) snap.forEach(item => { if (item.val().kanri === val) dup = true; });
+    if (dup) {
+      badge.className='check-badge warn'; badge.textContent='!';
+      status.textContent='⚠ この管理番号は過去に登録されています';
+      status.className='kanri-status warn';
+      document.getElementById('kanri-input').className='kanri-input warn';
+    } else {
+      badge.className='check-badge ok'; badge.textContent='✓';
+      status.textContent='重複なし'; status.className='kanri-status ok';
+      document.getElementById('kanri-input').className='kanri-input ok';
+    }
+  } catch(e) { badge.className='check-badge idle'; badge.textContent='?'; }
+}
+
+// 損傷種類
+function onDamageSelect() {
+  document.getElementById('damage-free').style.display =
+    document.getElementById('damage-select').value === 'その他' ? 'block' : 'none';
+}
+
+// 必須スロット
+function pickSlot(i) { currentSlot = i; document.getElementById('file-slot').click(); }
+async function onSlotPick(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const raw = await readFile(file);
+  const compressed = await compressImage(raw);
+  slotPhotos[currentSlot] = compressed;
+  e.target.value = '';
+  renderSlots(); updateBtn();
+}
+function renderSlots() {
+  SLOT_NAMES.forEach((name, i) => {
+    const slot = document.getElementById('slot-' + i);
+    if (slotPhotos[i]) {
+      slot.className = 'fixed-photo-slot filled';
+      slot.innerHTML = `<div class="slot-filled">
+        <img src="${slotPhotos[i]}" alt="${name}">
+        <div class="slot-label">${name}</div>
+        <button class="slot-del" onclick="clearSlot(event,${i})">✕</button>
+      </div>`;
+      slot.onclick = () => pickSlot(i);
+    } else {
+      slot.className = 'fixed-photo-slot';
+      slot.innerHTML = `<div class="slot-empty">
+        <svg width="22" height="18" viewBox="0 0 22 18" fill="none"><rect x="0.5" y="2.5" width="21" height="15" rx="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="11" r="3.5" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 2.5l1.5-2h4l1.5 2" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+        <span>${name}</span></div>`;
+      slot.onclick = () => pickSlot(i);
+    }
+  });
+}
+function clearSlot(e, i) { e.stopPropagation(); slotPhotos[i]=null; renderSlots(); updateBtn(); }
+
+// 追加写真
+async function onExtraPick(e) {
+  for (const file of Array.from(e.target.files)) {
+    const raw = await readFile(file);
+    const compressed = await compressImage(raw);
+    extraPhotos.push(compressed);
+  }
+  e.target.value = '';
+  renderExtra();
+}
+function renderExtra() {
+  const grid = document.getElementById('extra-grid');
+  grid.innerHTML = '';
+  extraPhotos.forEach((src, i) => {
+    const div = document.createElement('div');
+    div.className = 'extra-thumb';
+    div.innerHTML = `<img src="${src}" alt="追加${i+1}">
+      <button class="extra-del" onclick="delExtra(${i})">✕</button>
+      <div class="extra-label">追加${i+1}</div>`;
+    grid.appendChild(div);
+  });
+  const c = document.getElementById('extra-count');
+  c.textContent = extraPhotos.length > 0 ? `（${extraPhotos.length}枚）` : '';
+}
+function delExtra(i) { extraPhotos.splice(i,1); renderExtra(); }
+
+function updateBtn() {
+  const allFilled = slotPhotos.every(p => p !== null);
+  document.getElementById('submit-btn').disabled = !allFilled;
+  const filled = slotPhotos.filter(p=>p).length;
+  const hint = document.getElementById('slot-hint');
+  hint.textContent = allFilled ? '3枚揃いました！' : `${filled}/3枚 — 3枚すべて選択すると登録できます`;
+  hint.style.color = allFilled ? 'var(--green)' : 'var(--text3)';
+}
+
+// 登録
+async function doSubmit() {
+  const kanri = document.getElementById('kanri-input').value.trim();
+  const tanto = document.getElementById('tanto-input').value.trim();
+  const damSel = document.getElementById('damage-select').value;
+  const damFree = document.getElementById('damage-free').value.trim();
+  const damage = damSel === 'その他' ? damFree : damSel;
+  if (!kanri) { showToast('管理番号を入力してください', 'error'); return; }
+  if (!tanto) { showToast('担当者名を入力してください', 'error'); return; }
+  if (!damage) { showToast('損傷種類を選択してください', 'error'); return; }
+  if (!slotPhotos.every(p => p)) { showToast('3枚すべての写真を選択してください', 'error'); return; }
+
+  // 重複チェック
+  const isDup = document.getElementById('check-badge').classList.contains('warn');
+  if (isDup) {
+    document.getElementById('dup-confirm-title').textContent = '管理番号が重複しています';
+    document.getElementById('dup-confirm-sub').textContent =
+      `「${kanri}」は過去にすでに登録されています。このまま登録を続けますか？`;
+    document.getElementById('dup-confirm-overlay').classList.add('open');
+    return;
+  }
+
+  // マスターデータにない場合
+  const inMaster = !!masterData[kanri];
+  if (!inMaster) {
+    document.getElementById('dup-confirm-title').textContent = '点検リストにない管理番号です';
+    document.getElementById('dup-confirm-sub').textContent =
+      `「${kanri}」は点検リストにありません。このまま登録を続けますか？`;
+    document.getElementById('dup-confirm-overlay').classList.add('open');
+    return;
+  }
+
+  await execSubmit();
+}
+
+function closeDupConfirm() {
+  document.getElementById('dup-confirm-overlay').classList.remove('open');
+}
+
+async function submitForce() {
+  closeDupConfirm();
+  await execSubmit();
+}
+
+async function execSubmit() {
+  const kanri = document.getElementById('kanri-input').value.trim();
+  const tanto = document.getElementById('tanto-input').value.trim();
+  const damSel = document.getElementById('damage-select').value;
+  const damFree = document.getElementById('damage-free').value.trim();
+  const damage = damSel === 'その他' ? damFree : damSel;
+
+  const btn = document.getElementById('submit-btn');
+  btn.innerHTML = '<span class="spinner"></span>登録中...';
+  btn.disabled = true;
+
+  const now = getNow();
+  const master = masterData[kanri] || [];
+
+  try {
+    // 写真を分割保存（4MB制限対策）
+    const photoKeys = [];
+    const allPhotos = [
+      ...slotPhotos.map((d, i) => ({ data: d, label: SLOT_NAMES[i] })),
+      ...extraPhotos.map((d, i) => ({ data: d, label: `追加${i+1}` }))
+    ];
+    for (const photo of allPhotos) {
+      const r = await window._push(window._dbRef(window._db, 'photos'), photo);
+      photoKeys.push(r.key);
+    }
+
+    await window._push(window._dbRef(window._db, 'reports'), {
+      kanri, tanto, damage,
+      kumen: master[2]||'', shubetsu: master[1]||'', zumen: master[0]||'',
+      datetime: toJSTISOString(now),
+      company: window._currentCompany || 'unknown',
+      photoKeys
     });
-    showToast("更新しました");
-    closeModal();
-  } catch(e) { showToast("更新エラー: "+e.message); }
-};
 
-window.deleteRecord = async function(key) {
-  if (!confirm("この記録を削除しますか？")) return;
-  const cIdD = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===key)?.companyId || currentUser.companyId) : currentUser.companyId;
-  try { await remove(ref(db,"records/"+cIdD+"/"+key)); showToast("削除しました"); }
-  catch(e) { showToast("削除エラー: "+e.message); }
-};
+    // 完了モーダル表示
+    document.getElementById('complete-kanri').textContent = `管理番号：${kanri}`;
+    document.getElementById('complete-overlay').classList.add('open');
+    resetForm();
+  } catch(e) {
+    console.error('登録エラー:', e);
+    showToast('エラー: ' + (e.message||'登録に失敗しました'), 'error');
+  }
+  btn.innerHTML = '緊急報告を登録';
+  updateBtn();
+}
 
-function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function closeComplete() {
+  document.getElementById('complete-overlay').classList.remove('open');
+}
 
-// ---- Excelエクスポート ----
+function resetForm() {
+  document.getElementById('kanri-input').value = '';
+  document.getElementById('tanto-input').value = '';
+  document.getElementById('damage-select').value = '';
+  document.getElementById('damage-free').value = '';
+  document.getElementById('damage-free').style.display = 'none';
+  document.getElementById('check-badge').className = 'check-badge idle';
+  document.getElementById('check-badge').textContent = '—';
+  document.getElementById('kanri-status').textContent = '';
+  document.getElementById('kanri-input').className = 'kanri-input';
+  document.getElementById('auto-info').classList.add('hidden');
+  slotPhotos = [null, null, null];
+  extraPhotos = [];
+  renderSlots(); renderExtra(); updateBtn();
+}
+
+// 履歴（写真データは取得しない）
+async function loadHistory() {
+  const list = document.getElementById('history-list');
+  list.innerHTML = '<div class="empty-state">読み込み中...</div>';
+  try {
+    const repSnap = await window._get(window._dbRef(window._db, 'reports'));
+    historyData = [];
+    if (repSnap.exists()) {
+      repSnap.forEach(item => {
+        const r = { id: item.key, ...item.val() };
+        // 管理者は全件・一般ユーザーは自社分のみ
+        if (window._isAdmin || r.company === window._currentCompany) {
+          historyData.push(r);
+        }
+      });
+      historyData.reverse();
+    }
+    // 重複管理番号を検出（2件以上ある管理番号）
+    const kanriCount = {};
+    historyData.forEach(r => { kanriCount[r.kanri] = (kanriCount[r.kanri]||0) + 1; });
+    historyData.forEach(r => { r.isDup = kanriCount[r.kanri] > 1; });
+    filterHistory();
+  } catch(e) {
+    list.innerHTML = '<div class="empty-state">データを取得できませんでした</div>';
+  }
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active'); filterHistory();
+}
+
+function filterHistory() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  const now = new Date();
+  const filtered = historyData.filter(r => {
+    const d = new Date(r.datetime);
+    if (currentFilter === 'today') {
+      if (d.toDateString() !== now.toDateString()) return false;
+    }
+    if (currentFilter === 'week' && (now - d) / 864e5 > 7) return false;
+    if (currentFilter === 'month' && (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear())) return false;
+    if (q && !(r.kanri||'').toLowerCase().includes(q) && !(r.tanto||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+  renderHistory(filtered);
+}
+
+function renderHistory(data) {
+  const list = document.getElementById('history-list');
+  if (!data.length) { list.innerHTML = '<div class="empty-state">該当する報告がありません</div>'; return; }
+  list.innerHTML = data.map(r => {
+    const { dateStr } = toDisplayDate(r.datetime);
+    const photoCount = (r.photoKeys||[]).length;
+    const hasExtra = photoCount > 3;
+    return `<div class="report-card" onclick="showDetail('${r.id}')">
+      <div class="card-header">
+        <div>
+          <div class="card-kanri">${r.kanri||'-'}</div>
+          <div class="card-meta">${r.tanto||'-'}　${r.damage||'-'}</div>
+        </div>
+        <div>
+          <div class="card-date">${dateStr}</div>
+          <div style="text-align:right;display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap;margin-top:3px;">
+            ${r.isDup ? `<span class="card-badge" style="background:#fef2f2;color:#dc2626;">重複</span>` : ''}
+            ${hasExtra ? `<span class="card-badge" style="background:#fef3c7;color:#b45309;">追加あり</span>` : ''}
+            <span class="card-badge">${photoCount}枚</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function showDetail(id) {
+  const r = historyData.find(x => x.id===id); if (!r) return;
+  deleteTargetId = id;
+  const { dateTimeStr } = toDisplayDate(r.datetime);
+  document.getElementById('modal-kanri').textContent = r.kanri||'-';
+  document.getElementById('modal-details').innerHTML = `
+    <div class="detail-row"><span class="key">担当者</span><span class="val">${r.tanto||'-'}</span></div>
+    <div class="detail-row"><span class="key">撮影日時</span><span class="val">${dateTimeStr}</span></div>
+    <div class="detail-row"><span class="key">損傷種類</span><span class="val">${r.damage||'-'}</span></div>
+    <div class="detail-row"><span class="key">区名</span><span class="val">${r.kumen||'-'}</span></div>
+    <div class="detail-row"><span class="key">種別</span><span class="val">${r.shubetsu||'-'}</span></div>
+    <div class="detail-row"><span class="key">図面番号</span><span class="val">${r.zumen||'-'}</span></div>
+    ${window._isAdmin ? `<div class="detail-row"><span class="key">会社</span><span class="val">${window.getCompanyName(r.company)}</span></div>` : ''}`;
+
+  // 削除ボタン：自社分のみ表示（管理者は全件）
+  const canDelete = window._isAdmin || r.company === window._currentCompany;
+  document.getElementById('modal-delete-btn').style.display = canDelete ? '' : 'none';
+
+  // モーダルを先に開いてローディング表示
+  document.getElementById('modal-photos').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--text3);font-size:13px;"><span class="spinner" style="border-top-color:var(--accent);"></span> 写真を読み込み中...</div>';
+  document.getElementById('modal-overlay').classList.add('open');
+
+  // タップ時に写真だけ取得
+  try {
+    const photoKeys = r.photoKeys || [];
+    if (photoKeys.length === 0) {
+      document.getElementById('modal-photos').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--text3);font-size:12px;">写真データなし（3日以上経過）</div>';
+      return;
+    }
+    const photoSnaps = await Promise.all(
+      photoKeys.map(k => window._get(window._dbRef(window._db, 'photos/' + k)))
+    );
+    const photos = photoSnaps.map(s => s.exists() ? s.val()?.data : null).filter(Boolean);
+    if (photos.length === 0) {
+      document.getElementById('modal-photos').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--text3);font-size:12px;">写真データなし（3日以上経過）</div>';
+    } else {
+      document.getElementById('modal-photos').innerHTML = photos.map(p =>
+        `<div class="modal-photo"><img src="${p}" loading="lazy"></div>`).join('');
+    }
+  } catch(e) {
+    document.getElementById('modal-photos').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--red);font-size:12px;">写真の取得に失敗しました</div>';
+  }
+}
+
+function toDisplayDate(datetimeStr) {
+  // JST込みで保存されている場合はそのままパース
+  const d = new Date(datetimeStr);
+  // ローカル時間で表示（ブラウザがJSTなのでそのまま）
+  return {
+    dateStr: `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`,
+    dateTimeStr: `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+  };
+}
+function closeModal(e) { if (e.target===document.getElementById('modal-overlay')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function confirmDelete() {
+  const r = historyData.find(x => x.id===deleteTargetId); if (!r) return;
+  document.getElementById('confirm-sub').textContent = `管理番号「${r.kanri}」の報告を削除します。この操作は元に戻せません。`;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirm-overlay').classList.remove('open'); }
+async function execDelete() {
+  if (!deleteTargetId) return;
+  const r = historyData.find(x => x.id===deleteTargetId);
+  // 権限チェック：自社分のみ削除可能
+  if (!window._isAdmin && r?.company !== window._currentCompany) {
+    showToast('この報告を削除する権限がありません', 'error');
+    closeConfirm();
+    return;
+  }
+  closeConfirm(); closeModalDirect();
+  try {
+    if (r?.photoKeys) {
+      for (const key of r.photoKeys) await window._remove(window._dbRef(window._db, 'photos/'+key));
+    }
+    await window._remove(window._dbRef(window._db, 'reports/'+deleteTargetId));
+    showToast('削除しました');
+    deleteTargetId = null;
+    await loadHistory();
+  } catch(e) { showToast('削除に失敗しました', 'error'); }
+}
+
+let toastTimer = null;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type?' '+type:'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+window.doLogin=doLogin; window.doLogout=doLogout; window.switchTab=switchTab;
+window.onKanriInput=onKanriInput; window.onDamageSelect=onDamageSelect;
+window.pickSlot=pickSlot; window.onSlotPick=onSlotPick; window.clearSlot=clearSlot;
+window.onExtraPick=onExtraPick; window.delExtra=delExtra;
+window.doSubmit=doSubmit; window.closeComplete=closeComplete;
+window.setFilter=setFilter; window.filterHistory=filterHistory;
+window.showDetail=showDetail; window.closeModal=closeModal; window.closeModalDirect=closeModalDirect;
+window.confirmDelete=confirmDelete; window.closeConfirm=closeConfirm; window.execDelete=execDelete;
+window.onTestDateChange=onTestDateChange;
+window.closeDupConfirm=closeDupConfirm; window.submitForce=submitForce;
+</script>
+
+<script>
+
+// 今日の日付をデフォルトセット（タブ表示時）
+function initExportDate() {
+  const input = document.getElementById('export-date');
+  // 日本時間で今日の日付をセット
+  const now = new Date();
+  const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const today = jst.toISOString().split('T')[0];
+  if (!input.value) {
+    input.value = today;
+  }
+  onExportDateChange();
+}
+
+let exportRecords = [];
+
+async function onExportDateChange() {
+  if (!window._isAdmin) {
+    showToast('エクスポートは管理者のみ使用できます', 'error');
+    return;
+  }
+  const dateVal = document.getElementById('export-date').value;
+  if (!dateVal) return;
+
+  const previewSection = document.getElementById('export-preview-section');
+  const emptyDiv = document.getElementById('export-empty');
+  const exportBtn = document.getElementById('export-btn');
+
+  previewSection.style.display = 'none';
+  emptyDiv.style.display = 'none';
+  exportBtn.disabled = true;
+  exportRecords = [];
+
+  // Firebase未初期化チェック
+  if (!window._db || !window._get || !window._dbRef) {
+    showToast('Firebase未接続です。再読み込みしてください', 'error');
+    return;
+  }
+
+  try {
+    const [repSnap, photoSnap] = await Promise.all([
+      window._get(window._dbRef(window._db, 'reports')),
+      window._get(window._dbRef(window._db, 'photos'))
+    ]);
+
+    const photoMap = {};
+    if (photoSnap.exists()) photoSnap.forEach(item => { photoMap[item.key] = item.val(); });
+
+    const targetDate = dateVal;
+    if (repSnap.exists()) {
+      repSnap.forEach(item => {
+        const r = { id: item.key, ...item.val() };
+        // JSTで日付比較（UTCのままだと日本時間と9時間ズレる）
+        const d = new Date(r.datetime);
+        const localDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        if (localDate === targetDate) {
+          r.photos = (r.photoKeys||[]).map(k => photoMap[k]?.data).filter(Boolean);
+          r.photoLabels = (r.photoKeys||[]).map(k => photoMap[k]?.label||'').filter(Boolean);
+          exportRecords.push(r);
+        }
+      });
+    }
+
+    if (exportRecords.length === 0) {
+      emptyDiv.style.display = 'block';
+      return;
+    }
+
+    // 重複管理番号を検出（historyData全件と照合）
+    // historyDataが空の場合は全件取得して照合
+    let allKanriSet = new Set();
+    if (historyData.length > 0) {
+      // 既にキャッシュがある場合はそれを使う
+      const kanriCount = {};
+      historyData.forEach(r => { kanriCount[r.kanri] = (kanriCount[r.kanri]||0) + 1; });
+      Object.keys(kanriCount).forEach(k => { if (kanriCount[k] > 1) allKanriSet.add(k); });
+    } else {
+      // キャッシュがない場合はFirebaseから全件取得
+      try {
+        const allSnap = await window._get(window._dbRef(window._db, 'reports'));
+        const kanriCount = {};
+        if (allSnap.exists()) allSnap.forEach(item => {
+          const k = item.val().kanri;
+          kanriCount[k] = (kanriCount[k]||0) + 1;
+        });
+        Object.keys(kanriCount).forEach(k => { if (kanriCount[k] > 1) allKanriSet.add(k); });
+      } catch(e) {
+        // 取得失敗時はエクスポート内のみで判定
+        const kanriCount = {};
+        exportRecords.forEach(r => { kanriCount[r.kanri] = (kanriCount[r.kanri]||0) + 1; });
+        Object.keys(kanriCount).forEach(k => { if (kanriCount[k] > 1) allKanriSet.add(k); });
+      }
+    }
+
+    document.getElementById('export-count').textContent = `${exportRecords.length}件`;
+    document.getElementById('export-list').innerHTML = exportRecords.map(r => {
+      const hasExtra = (r.photoKeys||[]).length > 3;
+      const isDup = allKanriSet.has(r.kanri);
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg);border-radius:8px;font-size:13px;">
+        <span style="font-family:var(--mono);color:var(--text);">${r.kanri||'-'}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${isDup ? `<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:#fef2f2;color:#dc2626;">重複</span>` : ''}
+          ${hasExtra ? `<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:#fef3c7;color:#b45309;">追加あり</span>` : ''}
+          <span style="color:var(--text3);">${r.tanto||'-'}　${r.damage||'-'}</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    previewSection.style.display = 'block';
+    exportBtn.disabled = false;
+  } catch(e) {
+    console.error('エクスポートデータ取得エラー:', e);
+    showToast('データ取得失敗: ' + (e.message||e), 'error');
+  }
+}
+
+async function doExport() {
+  if (!exportRecords.length) return;
+  const btn = document.getElementById('export-btn');
+  btn.innerHTML = '<span class="spinner"></span>生成中...';
+  btn.disabled = true;
+
+  try {
+    const dateVal = document.getElementById('export-date').value;
+    const sheetName = dateVal.replace(/-/g, '');
+    const fileName = `緊急報告_${sheetName}.xlsx`;
+
+    const b64 = await generateExcelExcelJS(exportRecords, dateVal, sheetName);
+
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blob = new Blob([bytes], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Excelをダウンロードしました');
+  } catch(e) {
+    console.error(e);
+    showToast('生成に失敗しました: ' + (e.message||''), 'error');
+  }
+  btn.innerHTML = 'Excelをダウンロード';
+  btn.disabled = false;
+}
+
 async function loadExcelJS() {
   if (window.ExcelJS) return;
   await new Promise((resolve, reject) => {
@@ -814,120 +1116,214 @@ async function loadExcelJS() {
   });
 }
 
-const AREA_ROW_MAP = {
-  "都島区":6,"福島区":7,"此花区":8,"西区":9,"港区":10,"大正区":11,
-  "天王寺区":12,"浪速区":13,"西淀川区":14,"東淀川区":15,"東成区":16,
-  "生野区":17,"旭区":18,"城東区":19,"阿倍野区":20,"住吉区":21,
-  "東住吉区":22,"西成区":23,"淀川区":24,"鶴見区":25,"住之江区":26,
-  "平野区":27,"北区":28,"中央区":29
-};
+async function generateExcelExcelJS(records, dateVal, sheetName) {
+  await loadExcelJS();
 
-window.exportExcel = async function() {
-  const dateVal = document.getElementById("list-date").value;
-  if (!window._lastRenderItems || !window._lastRenderItems.length) {
-    showToast("エクスポートするデータがありません"); return;
+  // Book1.xlsxをfetchで読み込む
+  const res = await fetch('Book1.xlsx');
+  if (!res.ok) throw new Error('Book1.xlsx が取得できません (HTTP ' + res.status + ')');
+  const arrayBuf = await res.arrayBuffer();
+
+  // ExcelJSで読み込み（スタイル全保持）
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(arrayBuf);
+
+  // 元シートを取得
+  const srcSheet = wb.getWorksheet('元');
+  if (!srcSheet) throw new Error('元シートが見つかりません');
+
+  // 新シートに完全コピー
+  const newSheet = wb.addWorksheet(sheetName);
+
+  // 全列幅を3に統一（元シートのコピーより後に設定して上書き）
+  for (let c = 1; c <= 55; c++) {
+    newSheet.getColumn(c).width = 3;
   }
-  const btn = document.getElementById("export-btn");
-  btn.disabled = true; btn.textContent = "生成中...";
-  try {
-    await loadExcelJS();
-    const res = await fetch('稼働実績テンプレート.xlsx');
-    if (!res.ok) throw new Error('テンプレートファイルが取得できません (HTTP ' + res.status + ')');
-    const arrayBuf = await res.arrayBuffer();
-    const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(arrayBuf);
-    const srcSheet = wb.getWorksheet('元');
-    if (!srcSheet) throw new Error('「元」シートが見つかりません');
-    const sheetName = dateVal.replace(/-/g, '');
-    const newSheet = wb.addWorksheet(sheetName);
-    srcSheet.columns.forEach((col, i) => { if (col.width) newSheet.getColumn(i + 1).width = col.width; });
-    srcSheet.eachRow({ includeEmpty: true }, (row, rowNum) => {
-      const newRow = newSheet.getRow(rowNum);
-      if (row.height) newRow.height = row.height;
-      row.eachCell({ includeEmpty: true }, (cell, colNum) => {
-        const newCell = newRow.getCell(colNum);
-        newCell.style = JSON.parse(JSON.stringify(cell.style));
-        if (cell.type !== ExcelJS.ValueType.Merge) newCell.value = cell.value;
-      });
-      newRow.commit();
-    });
-    (srcSheet.model.merges || []).forEach(merge => { try { newSheet.mergeCells(merge); } catch(e) {} });
 
-    const areaMap = {};
-    window._lastRenderItems.forEach(r => {
-      const areas = (r.areas && Array.isArray(r.areas)) ? r.areas
-        : [{areaName:r.area||"", kinsetsu:r.kinsetsu||0, enpo:r.enpo||0, detail1:r.detail1||0, detail2:r.detail2||0}];
-      areas.forEach(a => {
-        const k = (a.areaName||"").trim();
-        if (!k) return;
-        if (!areaMap[k]) areaMap[k] = {enpo:0, kinsetsu:0, detail1:0, detail2:0};
-        areaMap[k].enpo     += a.enpo||0;
-        areaMap[k].kinsetsu += a.kinsetsu||0;
-        areaMap[k].detail1  += a.detail1||0;
-        areaMap[k].detail2  += a.detail2||0;
-      });
+  // 行をコピー（値・スタイル・マージ全て）
+  srcSheet.eachRow({ includeEmpty: true }, (row, rowNum) => {
+    const newRow = newSheet.getRow(rowNum);
+    newRow.height = 18.8;
+    row.eachCell({ includeEmpty: true }, (cell, colNum) => {
+      const newCell = newRow.getCell(colNum);
+      // スタイルをディープコピー
+      newCell.style = JSON.parse(JSON.stringify(cell.style));
+      // 値（マージセルの結合元以外）
+      if (cell.type !== ExcelJS.ValueType.Merge) {
+        newCell.value = cell.value;
+      }
     });
+    newRow.commit();
+  });
 
-    let written = 0;
-    Object.entries(areaMap).forEach(([areaName, v]) => {
-      const rowIdx = AREA_ROW_MAP[areaName];
-      if (!rowIdx) return;
-      if (v.enpo)     newSheet.getRow(rowIdx).getCell(8).value = v.enpo;
-      if (v.kinsetsu) newSheet.getRow(rowIdx).getCell(9).value = v.kinsetsu;
-      if (v.detail1)  newSheet.getRow(rowIdx).getCell(10).value = v.detail1;
-      if (v.detail2)  newSheet.getRow(rowIdx).getCell(11).value = v.detail2;
-      newSheet.getRow(rowIdx).commit();
-      written++;
-    });
-    if (written === 0) { showToast("一致する区名がありませんでした"); return; }
+  // マージセルをコピー
+  srcSheet.model.merges.forEach(merge => {
+    try { newSheet.mergeCells(merge); } catch(e) {}
+  });
 
-    // 次回点検区（複数対応）
-    const TANTO_NAME = "南\u3000元樹\u3000080-1484-5774";
-    const NASHI = ["無し","なし","ナシ","無"];
-    const tomorrowSet = new Set();
-    window._lastRenderItems.forEach(r => {
-      normTomorrows(r).forEach(t => {
-        const trimmed = t.trim();
-        if (trimmed && !NASHI.includes(trimmed)) tomorrowSet.add(trimmed);
-      });
-    });
-    tomorrowSet.forEach(areaName => {
-      const rowIdx = AREA_ROW_MAP[areaName];
-      if (!rowIdx) return;
-      const row = newSheet.getRow(rowIdx);
-      row.getCell(13).value = "○";
-      row.getCell(14).value = TANTO_NAME;
-      row.getCell(15).value = "○";
-      row.getCell(16).value = TANTO_NAME;
-      row.getCell(17).value = "○";
-      row.getCell(18).value = TANTO_NAME;
-      row.getCell(19).value = "○";
-      row.getCell(20).value = TANTO_NAME;
-      row.commit();
-    });
+  // ===== データ書き込み =====
+  // ブロック開始行: 2, 19, 36
+  // 左: D=日付(4), K=担当者(11), E=区名(5), K=種別(11)→情報行はK, P=管理番号(16), X=図面番号(24), W=損傷種類(23)
+  // 右: AF=日付(32), AM=担当者(39)→ AI列ラベルの右, AG=区名(33), AM=種別(39), AR=管理番号(44), AZ=図面番号(52), AY=損傷種類(51)
 
-    const buffer = await wb.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const filename = "稼働実績_" + sheetName + ".xlsx";
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast(filename + " をダウンロードしました");
-  } catch(e) {
-    console.error(e);
-    showToast('エラー: ' + (e.message || '生成に失敗しました'));
+  const BLOCK_ROWS = [2, 19, 36];
+
+  function writeBlock(sheet, startRow, side, rec) {
+    const L = side === 'left';
+    const cDate     = L ? 4  : 32;
+    const cTanto    = L ? 11 : 39;
+    const cKumen    = L ? 5  : 33;
+    const cShubetsu = L ? 11 : 39;
+    const cKanri    = L ? 16 : 44;
+    const cZumen    = L ? 24 : 52;
+    const cDamage   = L ? 23 : 51;
+
+    const d = new Date(dateVal);
+    sheet.getRow(startRow).getCell(cDate).value = d;
+    sheet.getRow(startRow).getCell(cDate).numFmt = 'yyyy/m/d';
+    sheet.getRow(startRow).getCell(cTanto).value = rec.tanto || '';
+    sheet.getRow(startRow + 1).getCell(cKumen).value = rec.kumen || '';
+    sheet.getRow(startRow + 1).getCell(cShubetsu).value = rec.shubetsu || '';
+    sheet.getRow(startRow + 1).getCell(cKanri).value = rec.kanri || '';
+    sheet.getRow(startRow + 1).getCell(cZumen).value = rec.zumen || '';
+    sheet.getRow(startRow + 14).getCell(cDamage).value = rec.damage || '';
+
+    sheet.getRow(startRow).commit();
+    sheet.getRow(startRow + 1).commit();
+    sheet.getRow(startRow + 14).commit();
   }
-  btn.disabled = false; btn.textContent = "Excel様式にエクスポート";
-};
 
-function showToast(msg) {
-  const t=document.getElementById("toast");
-  t.textContent=msg; t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),2500);
+  for (let i = 0; i < Math.min(records.length, 6); i++) {
+    const blockIdx = Math.floor(i / 2);
+    const side = i % 2 === 0 ? 'left' : 'right';
+    writeBlock(newSheet, BLOCK_ROWS[blockIdx], side, records[i]);
+  }
+
+  // ===== 写真を埋め込む =====
+  // ブロック開始行(0-indexed): 1, 18, 35
+  const BLOCK_ROWS_0 = [1, 18, 35];
+
+  // 写真エリアの列定義（0-indexed, side別）
+  const PHOTO_COLS = {
+    left:  [
+      { tl_col: 1,  br_col: 9,  label: '管理番号札' },
+      { tl_col: 10, br_col: 18, label: '全景'       },
+      { tl_col: 19, br_col: 27, label: '損傷箇所'   },
+    ],
+    right: [
+      { tl_col: 29, br_col: 37, label: '管理番号札' },
+      { tl_col: 38, br_col: 46, label: '全景'       },
+      { tl_col: 47, br_col: 55, label: '損傷箇所'   },
+    ]
+  };
+
+  for (let i = 0; i < Math.min(records.length, 6); i++) {
+    const rec = records[i];
+    const blockIdx = Math.floor(i / 2);
+    const side = i % 2 === 0 ? 'left' : 'right';
+    const startRow0 = BLOCK_ROWS_0[blockIdx];
+    const photoCols = PHOTO_COLS[side];
+    const tl_row = startRow0 + 2;
+    const br_row = startRow0 + 15;
+
+    // photos配列: [管理番号札, 全景, 損傷箇所, ...追加]
+    const photos = rec.photos || [];
+
+    for (let pi = 0; pi < Math.min(photos.length, 3); pi++) {
+      const photoData = photos[pi];
+      if (!photoData) continue;
+
+      try {
+        // base64からextensionを判定
+        const ext = photoData.startsWith('data:image/png') ? 'png' : 'jpeg';
+        const base64 = photoData.replace(/^data:image\/\w+;base64,/, '');
+
+        const imageId = wb.addImage({ base64, extension: ext });
+
+        // 元画像の縦横比を取得
+        const imgEl = await new Promise((res, rej) => {
+          const img = new Image();
+          img.onload = () => res(img);
+          img.onerror = rej;
+          img.src = photoData;
+        });
+        const origRatio = imgEl.naturalWidth / imgEl.naturalHeight;
+
+        // セル実測値（Excelで確認）
+        const cellWpt = 23.04 * 7.5;  // 列幅単位 → pt: 172.8pt
+        const cellHpt = 225;           // 高さpt: 225pt
+        const cellRatio = cellWpt / cellHpt;
+
+        if (origRatio <= cellRatio) {
+          // 縦向き写真 → 固定サイズ（幅7.76cm × 高さ10.38cm）・右0.5pt・下1pt
+          const fixedW_v = Math.round(7.76  * 28.35); // 220pt
+          const fixedH_v = Math.round(10.38 * 28.35); // 294pt
+          const offsetRows_v = 4   / 18.8;
+          const offsetCols_v = 0.7 / (3.5 * 7.5);
+          newSheet.addImage(imageId, {
+            tl: { col: photoCols[pi].tl_col + offsetCols_v, row: tl_row + offsetRows_v },
+            ext: { width: fixedW_v, height: fixedH_v },
+            editAs: 'oneCell'
+          });
+        } else {
+          // 横向き写真 → 固定サイズ（幅7.78cm × 高さ5.89cm）・10pt下
+          const fixedW_h = Math.round(7.78 * 28.35); // 221pt
+          const fixedH_h = Math.round(5.89 * 28.35); // 167pt
+          const offsetRows_h = 55 / 18.8;
+          const offsetCols_h = 1 / (3.5 * 7.5);
+          newSheet.addImage(imageId, {
+            tl: { col: photoCols[pi].tl_col + offsetCols_h, row: tl_row + offsetRows_h },
+            ext: { width: fixedW_h, height: fixedH_h },
+            editAs: 'oneCell'
+          });
+        }
+      } catch(e) {
+        console.warn(`写真埋め込みスキップ (${side}/${pi}):`, e.message);
+      }
+    }
+  }
+
+  // 1ブロックごとに黒の太枠で囲む
+  // 上下1行ずつ外す → startRow+1 〜 startRow+14（14行分）
+  const thick = { style: 'medium', color: { argb: 'FF000000' } };
+
+  function applyBlockBorder(sheet, startRow, colStart, colEnd) {
+    const borderStart = startRow + 1;
+    const borderEnd   = startRow + 14;
+    for (let r = borderStart; r <= borderEnd; r++) {
+      for (let c = colStart; c <= colEnd; c++) {
+        const cell = sheet.getRow(r).getCell(c);
+        const border = cell.border ? JSON.parse(JSON.stringify(cell.border)) : {};
+        if (r === borderStart) border.top    = thick;
+        if (r === borderEnd)   border.bottom = thick;
+        if (c === colStart)    border.left   = thick;
+        if (c === colEnd)      border.right  = thick;
+        cell.border = border;
+      }
+      sheet.getRow(r).commit();
+    }
+  }
+
+  BLOCK_ROWS.forEach(startRow => {
+    applyBlockBorder(newSheet, startRow, 2, 27);  // 左ブロック
+    applyBlockBorder(newSheet, startRow, 30, 55); // 右ブロック
+  });
+
+  // 列幅を最後に確実に3.5へ上書き
+  for (let c = 1; c <= 55; c++) {
+    newSheet.getColumn(c).width = 3.5;
+  }
+
+  // xlsxとしてbase64で出力
+  const buffer = await wb.xlsx.writeBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
 }
+
+window.onExportDateChange=onExportDateChange; window.doExport=doExport;
+window.initExportDate=initExportDate;
 
 </script>
 </body>
