@@ -1062,22 +1062,25 @@ window.initAttend = async function() {
   const date = document.getElementById("attend-date").value;
   if (!date || !db) return;
   const companyId = currentUser?.companyId || "unknown";
-  // 管理者：全社、一般：自社のみ
+  // 全員: attendance/{companyId}/{date} に保存
+  // 管理者: 全社を読む → attendance/{date} 配下を全部取得
   const attendRef = currentUser?.isAdmin
-    ? ref(db, "attendance/" + date)
+    ? ref(db, "attendance")
     : ref(db, "attendance/" + companyId + "/" + date);
+
   onValue(attendRef, snap => {
     const container = document.getElementById("attend-list");
     container.innerHTML = "";
     attendSeq = 0;
     const val = snap.val();
-    // 管理者は全社をフラットに結合
     let names = [];
-    if (currentUser?.isAdmin && val && typeof val === "object") {
-      // 管理者: {companyId: [names]} または [names] の両対応
-      Object.values(val).forEach(v => {
-        if (Array.isArray(v)) names = names.concat(v);
-        else if (typeof v === "string") names.push(v);
+    if (currentUser?.isAdmin && val) {
+      // 管理者: {companyId: {date: [names]}} 構造から対象日を取得
+      Object.values(val).forEach(companyDates => {
+        if (companyDates && companyDates[date]) {
+          const arr = companyDates[date];
+          if (Array.isArray(arr)) names = names.concat(arr);
+        }
       });
     } else if (Array.isArray(val)) {
       names = val;
@@ -1098,12 +1101,9 @@ window.saveAttend = async function() {
   if (!names.length) { showToast("点検者を入力してください"); return; }
   if (!db) return;
   const companyId = currentUser?.companyId || "unknown";
-  // 管理者：全社共通パス、一般：自社パス
-  const attendPath = currentUser?.isAdmin
-    ? "attendance/" + date
-    : "attendance/" + companyId + "/" + date;
+  // 全員: attendance/{companyId}/{date} に保存
   try {
-    await set(ref(db, attendPath), names);
+    await set(ref(db, "attendance/" + companyId + "/" + date), names);
     showToast("保存しました！");
     checkAttend(date);
   } catch(e) { showToast("保存エラー: " + e.message); }
@@ -1115,24 +1115,26 @@ function checkAttend(date) {
   const result = document.getElementById("attend-check-result");
   const companyId = currentUser?.companyId || "unknown";
 
-  // 点検者を取得（管理者：全社、一般：自社）
+  // 点検者取得: 管理者→全社、一般→自社
   const attendRef = currentUser?.isAdmin
-    ? ref(db, "attendance/" + date)
+    ? ref(db, "attendance")
     : ref(db, "attendance/" + companyId + "/" + date);
 
   onValue(attendRef, snapA => {
     const val = snapA.val();
     let registered = [];
-    if (currentUser?.isAdmin && val && typeof val === "object") {
-      Object.values(val).forEach(v => {
-        if (Array.isArray(v)) registered = registered.concat(v);
-        else if (typeof v === "string") registered.push(v);
+    if (currentUser?.isAdmin && val) {
+      Object.values(val).forEach(companyDates => {
+        if (companyDates && companyDates[date]) {
+          const arr = companyDates[date];
+          if (Array.isArray(arr)) registered = registered.concat(arr);
+        }
       });
     } else if (Array.isArray(val)) {
       registered = val;
     }
 
-    // 報告を取得（管理者：全社、一般：自社）
+    // 報告取得: 管理者→全社、一般→自社
     const recordsRef = currentUser?.isAdmin
       ? ref(db, "records")
       : ref(db, "records/" + companyId);
@@ -1153,7 +1155,6 @@ function checkAttend(date) {
         });
       }
 
-      // 登録外で報告が来ている人
       const registeredSet = new Set(registered);
       const extraReported = [...reported].filter(n => !registeredSet.has(n));
 
