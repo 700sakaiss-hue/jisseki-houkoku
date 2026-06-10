@@ -363,6 +363,11 @@
     <button onclick="goToday()">今日</button>
   </div>
   <div id="list-container"><div class="loading">読み込み中...</div></div>
+  <!-- 報告状況 -->
+  <div class="card" id="attend-check-card" style="display:none;">
+    <div class="card-title" style="margin-bottom:8px;">報告状況</div>
+    <div id="attend-check-result"></div>
+  </div>
   <button class="btn-export admin-only" id="export-btn" onclick="exportExcel()" disabled>Excel様式にエクスポート</button>
 </div>
 
@@ -381,11 +386,7 @@
     <button class="btn-submit" onclick="saveAttend()">保存する</button>
   </div>
 
-  <!-- 未報告チェック -->
-  <div class="card" id="attend-check-card" style="display:none;">
-    <div class="card-title">報告状況</div>
-    <div id="attend-check-result"></div>
-  </div>
+
 </div>
 
 <div class="modal-overlay" id="edit-modal">
@@ -719,6 +720,7 @@ function normAreas(r) {
 
 function renderList(items) {
   window._lastRenderItems = items;
+  checkAttend(document.getElementById("list-date").value);
   document.getElementById("export-btn").disabled = items.length === 0;
   const container = document.getElementById("list-container");
   if (!items.length) { container.innerHTML='<div class="empty-msg">この日のデータはありません</div>'; return; }
@@ -1054,13 +1056,13 @@ window.saveAttend = async function() {
 
 function checkAttend(date) {
   if (!db || !date) return;
+  const card   = document.getElementById("attend-check-card");
+  const result = document.getElementById("attend-check-result");
+
   // 登録済み点検者を取得
   onValue(ref(db, "attendance/" + date), snapA => {
     const registered = snapA.val() ? Object.values(snapA.val()) : [];
-    if (!registered.length) {
-      document.getElementById("attend-check-card").style.display = "none";
-      return;
-    }
+
     // 当日の報告を取得
     const companyId = currentUser?.companyId || "unknown";
     const recordsRef = currentUser?.isAdmin ? ref(db, "records") : ref(db, "records/" + companyId);
@@ -1080,19 +1082,42 @@ function checkAttend(date) {
         });
       }
 
-      const unreported = registered.filter(n => !reported.has(n));
-      const card = document.getElementById("attend-check-card");
-      const result = document.getElementById("attend-check-result");
+      // 登録外で報告が来ている人
+      const registeredSet = new Set(registered);
+      const extraReported = [...reported].filter(n => !registeredSet.has(n));
+
+      // 登録者も報告者もいない場合は非表示
+      if (!registered.length && !extraReported.length) {
+        card.style.display = "none";
+        return;
+      }
+
       card.style.display = "";
 
-      if (unreported.length === 0) {
-        result.innerHTML = '<div style="text-align:center;padding:12px;font-size:15px;color:#0d9e6a;font-weight:500;">✅ 全員報告済みです！</div>';
-      } else {
-        result.innerHTML = '<div style="background:rgba(226,75,74,0.08);border:1px solid rgba(226,75,74,0.2);border-radius:10px;padding:12px 14px;">'
-          + '<div style="font-size:13px;font-weight:500;color:#e24b4a;margin-bottom:8px;">⚠️ 未報告の点検者がいます</div>'
-          + unreported.map(n => '<div style="font-size:14px;color:#292a2d;padding:4px 0;border-bottom:1px dashed rgba(226,75,74,0.15);">・' + esc(n) + '</div>').join("")
-          + '</div>';
-      }
+      // タグ生成
+      const tags = [
+        // 登録済み＋報告あり → 緑
+        ...registered.filter(n => reported.has(n)).map(n =>
+          '<span style="font-size:12px;background:rgba(13,158,106,0.12);color:#0d9e6a;border:1px solid rgba(13,158,106,0.25);border-radius:20px;padding:3px 10px;white-space:nowrap;">✅ ' + esc(n) + '</span>'
+        ),
+        // 登録済み＋未報告 → 赤
+        ...registered.filter(n => !reported.has(n)).map(n =>
+          '<span style="font-size:12px;background:rgba(226,75,74,0.1);color:#e24b4a;border:1px solid rgba(226,75,74,0.25);border-radius:20px;padding:3px 10px;white-space:nowrap;">⏳ ' + esc(n) + '</span>'
+        ),
+        // 登録外＋報告あり → 黒
+        ...extraReported.map(n =>
+          '<span style="font-size:12px;background:rgba(41,42,45,0.08);color:#292a2d;border:1px solid rgba(41,42,45,0.2);border-radius:20px;padding:3px 10px;white-space:nowrap;">📋 ' + esc(n) + '</span>'
+        ),
+      ];
+
+      const unreportedCount = registered.filter(n => !reported.has(n)).length;
+      const headerHtml = unreportedCount === 0
+        ? '<div style="font-size:12px;font-weight:500;color:#0d9e6a;margin-bottom:8px;">✅ 登録済み全員報告済み！</div>'
+        : '<div style="font-size:12px;font-weight:500;color:#e24b4a;margin-bottom:8px;">⚠️ 未報告 ' + unreportedCount + '名 / ' + registered.length + '名中</div>';
+
+      result.innerHTML = headerHtml
+        + '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + tags.join("") + '</div>';
+
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
