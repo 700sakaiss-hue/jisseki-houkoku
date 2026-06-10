@@ -1174,7 +1174,7 @@ function checkAttend(date) {
           '<span style="font-size:12px;background:rgba(13,158,106,0.12);color:#0d9e6a;border:1px solid rgba(13,158,106,0.25);border-radius:20px;padding:3px 10px;white-space:nowrap;">✅ ' + esc(n) + '</span>'
         ),
         ...registered.filter(n => !reported.has(n)).map(n =>
-          '<span style="font-size:12px;background:rgba(226,75,74,0.1);color:#e24b4a;border:1px solid rgba(226,75,74,0.25);border-radius:20px;padding:3px 10px;white-space:nowrap;">💭 ' + esc(n) + '</span>'
+          '<span style="font-size:12px;background:rgba(226,75,74,0.1);color:#e24b4a;border:1px solid rgba(226,75,74,0.25);border-radius:20px;padding:3px 10px;white-space:nowrap;">✏️ ' + esc(n) + '</span>'
         ),
         ...extraReported.map(n =>
           '<span style="font-size:12px;background:rgba(41,42,45,0.08);color:#292a2d;border:1px solid rgba(41,42,45,0.2);border-radius:20px;padding:3px 10px;white-space:nowrap;">❓ ' + esc(n) + '</span>'
