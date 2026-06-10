@@ -1091,7 +1091,7 @@ window.initAttend = async function() {
     if (!adminSelectedCompany) adminSelectedCompany = uniqueCompanies[0].companyId;
 
     tabBtns.innerHTML = uniqueCompanies.map(c =>
-      '<button onclick="selectAttendCompany('' + c.companyId + '','' + c.companyName + '')" '
+      '<button onclick="selectAttendCompany(\'' + c.companyId + '\',\'' + c.companyName + '\')" '
       + 'style="padding:6px 14px;border-radius:20px;border:1px solid;font-size:13px;cursor:pointer;transition:all 0.15s;'
       + (adminSelectedCompany === c.companyId
         ? 'background:#247658;color:#fff;border-color:#247658;'
