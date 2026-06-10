@@ -362,12 +362,12 @@
     <input type="date" id="list-date" onchange="loadList()">
     <button onclick="goToday()">今日</button>
   </div>
-  <div id="list-container"><div class="loading">読み込み中...</div></div>
   <!-- 報告状況 -->
   <div class="card" id="attend-check-card" style="display:none;">
     <div class="card-title" style="margin-bottom:8px;">報告状況</div>
     <div id="attend-check-result"></div>
   </div>
+  <div id="list-container"><div class="loading">読み込み中...</div></div>
   <button class="btn-export admin-only" id="export-btn" onclick="exportExcel()" disabled>Excel様式にエクスポート</button>
 </div>
 
@@ -1102,11 +1102,11 @@ function checkAttend(date) {
         ),
         // 登録済み＋未報告 → 赤
         ...registered.filter(n => !reported.has(n)).map(n =>
-          '<span style="font-size:12px;background:rgba(226,75,74,0.1);color:#e24b4a;border:1px solid rgba(226,75,74,0.25);border-radius:20px;padding:3px 10px;white-space:nowrap;">⏳ ' + esc(n) + '</span>'
+          '<span style="font-size:12px;background:rgba(226,75,74,0.1);color:#e24b4a;border:1px solid rgba(226,75,74,0.25);border-radius:20px;padding:3px 10px;white-space:nowrap;">✖️ ' + esc(n) + '</span>'
         ),
         // 登録外＋報告あり → 黒
         ...extraReported.map(n =>
-          '<span style="font-size:12px;background:rgba(41,42,45,0.08);color:#292a2d;border:1px solid rgba(41,42,45,0.2);border-radius:20px;padding:3px 10px;white-space:nowrap;">📋 ' + esc(n) + '</span>'
+          '<span style="font-size:12px;background:rgba(41,42,45,0.08);color:#292a2d;border:1px solid rgba(41,42,45,0.2);border-radius:20px;padding:3px 10px;white-space:nowrap;">❓ ' + esc(n) + '</span>'
         ),
       ];
 
