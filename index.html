@@ -462,8 +462,9 @@ onAuthStateChanged(auth, user => {
     document.getElementById("login-screen").classList.remove("active");
     document.getElementById("main-header").style.display = "";
     document.getElementById("main-tabbar").style.display = "";
-    document.getElementById("page-input").style.display = "";
-    document.getElementById("page-attend").style.display = "none";
+    const savedTab = sessionStorage.getItem("activeTab") || "input";
+    switchTab(savedTab);
+    document.getElementById("page-attend").style.display = savedTab === "attend" ? "" : "none";
     document.getElementById("attend-date").value = todayStr();
     document.getElementById("company-badge").textContent = currentUser.companyName;
     document.querySelectorAll(".admin-only").forEach(el => {
@@ -532,6 +533,7 @@ document.getElementById("header-date").textContent =
 window.goToday = () => { document.getElementById("list-date").value = todayStr(); loadList(); };
 
 window.switchTab = function(tab) {
+  sessionStorage.setItem("activeTab", tab);
   document.querySelectorAll(".tab-btn").forEach((b,i) => {
     b.classList.toggle("active", ["input","list","attend"][i] === tab);
   });
