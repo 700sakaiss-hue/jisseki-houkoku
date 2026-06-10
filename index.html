@@ -297,19 +297,21 @@
 </div>
 
 <header id="main-header" style="display:none;">
-  <div style="display:flex;align-items:center;gap:6px;">
-    <div>
-      <div style="font-size:11px;opacity:0.75;letter-spacing:0.08em;margin-bottom:1px;font-weight:700;color:#a8d5b5;">堺総合サービス</div>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;width:100%;">
+    <!-- 左列 -->
+    <div style="display:flex;flex-direction:column;gap:3px;">
+      <div style="font-size:11px;opacity:0.75;letter-spacing:0.08em;font-weight:700;color:#a8d5b5;">堺総合サービス</div>
       <h1 style="font-size:15px;">稼働報告アプリ</h1>
+      <span id="company-badge" class="company-badge" style="margin-left:0;align-self:flex-start;"></span>
     </div>
-    <span id="company-badge" class="company-badge"></span>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">
+    <!-- 右列 -->
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+      <div style="display:flex;gap:6px;">
+        <button onclick="location.reload()" style="font-size:13px;color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:3px 8px;cursor:pointer;">↻ 更新</button>
+        <button class="btn-logout" onclick="doLogout()" style="font-size:11px;padding:3px 8px;">ログアウト</button>
+      </div>
       <span id="header-date" style="font-size:11px;opacity:0.8;"></span>
     </div>
-    <button onclick="location.reload()" style="font-size:14px;color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:3px 8px;cursor:pointer;">↻</button>
-    <button class="btn-logout" onclick="doLogout()" style="font-size:11px;padding:3px 8px;">ログアウト</button>
   </div>
 </header>
 
