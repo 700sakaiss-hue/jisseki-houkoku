@@ -450,6 +450,7 @@ onAuthStateChanged(auth, user => {
     document.getElementById("main-tabbar").style.display = "";
     document.getElementById("page-input").style.display = "";
     document.getElementById("page-attend").style.display = "none";
+    document.getElementById("attend-date").value = todayStr();
     document.getElementById("company-badge").textContent = currentUser.companyName;
     document.querySelectorAll(".admin-only").forEach(el => {
       el.style.display = currentUser.isAdmin ? "block" : "none";
@@ -509,7 +510,6 @@ adjustLayout();
 window.addEventListener('resize', adjustLayout);
 document.getElementById("inp-date").value = todayStr();
 document.getElementById("list-date").value = todayStr();
-document.getElementById("attend-date").value = todayStr();
 document.getElementById("header-date").textContent =
   new Date().toLocaleDateString("ja-JP", {month:"short",day:"numeric",weekday:"short"});
 
@@ -1004,7 +1004,7 @@ window.addAttendRow = function(value) {
   const container = document.getElementById("attend-list");
   const uid = "att-" + (++attendSeq);
   const isFirst = container.querySelectorAll(".tomorrow-input-row").length === 0;
-  const rmBtn = isFirst ? "" : '<button class="btn-remove-tomorrow" onclick="removeAttendRow('' + uid + '')">×</button>';
+  const rmBtn = isFirst ? "" : '<button class="btn-remove-tomorrow" onclick="removeAttendRow(\'' + uid + '\')">×</button>';
   container.insertAdjacentHTML("beforeend",
     '<div class="tomorrow-input-row" id="' + uid + '">'
     + '<input type="text" placeholder="例：北口" value="' + esc(value) + '">'
