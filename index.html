@@ -1007,7 +1007,7 @@ window.addAttendRow = function(value) {
   const rmBtn = isFirst ? "" : '<button class="btn-remove-tomorrow" onclick="removeAttendRow(\'' + uid + '\')">×</button>';
   container.insertAdjacentHTML("beforeend",
     '<div class="tomorrow-input-row" id="' + uid + '">'
-    + '<input type="text" placeholder="例：北口" value="' + esc(value) + '">'
+    + '<input type="text" placeholder="例：山田" value="' + esc(value) + '">'
     + rmBtn
     + '</div>');
 };
