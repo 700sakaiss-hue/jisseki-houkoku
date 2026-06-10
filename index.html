@@ -34,28 +34,26 @@
     z-index: 0; pointer-events: none;
   }
   header {
-    background: rgba(255,255,255,0.35);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255,255,255,0.5);
-    color: #0a3d28; padding: 10px 16px;
+    background: #247658;
+    border-bottom: none;
+    color: white; padding: 10px 16px;
     display: flex; align-items: center; justify-content: space-between;
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   }
-  header h1 { font-size: 15px; font-weight: 500; color: #0a3d28; }
+  header h1 { font-size: 15px; font-weight: 500; color: white; }
   header span { font-size: 13px; opacity: 0.8; }
   .tab-bar {
     display: flex;
-    background: rgba(255,255,255,0.25);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255,255,255,0.4);
+    background: #247658;
+    border-bottom: 2px solid #1a5e45;
     position: fixed; top: 0; left: 0; right: 0; z-index: 99;
   }
   .tab-btn {
     flex: 1; padding: 12px 8px; border: none; background: none;
-    font-size: 15px; color: rgba(10,61,40,0.5); cursor: pointer;
+    font-size: 15px; color: rgba(255,255,255,0.6); cursor: pointer;
     border-bottom: 3px solid transparent; transition: all 0.2s;
   }
-  .tab-btn.active { color: #0a3d28; border-bottom-color: #0a3d28; font-weight: 500; }
+  .tab-btn.active { color: #fff; border-bottom-color: #fff; font-weight: 500; }
   .page { display: none; padding: 12px; max-width: 600px; margin: 0 auto; position: relative; z-index: 1; }
   .page.active { display: block; }
   .card {
@@ -258,8 +256,8 @@
   .btn-login { width:100%; padding:14px; background:linear-gradient(135deg,#0d9e6a,#0a6644); color:white; border:none; border-radius:10px; font-size:16px; font-weight:500; cursor:pointer; margin-top:8px; box-shadow:0 4px 16px rgba(13,158,106,0.35); transition:all 0.2s; }
   .btn-login:active { transform:scale(0.98); }
   .login-error { font-size:13px; color:#e24b4a; text-align:center; margin-top:10px; min-height:18px; }
-  .company-badge { font-size:11px; background:rgba(13,158,106,0.15); color:#0a6644; border:1px solid rgba(13,158,106,0.25); border-radius:10px; padding:2px 8px; margin-left:8px; }
-  .btn-logout { font-size:11px; color:#0a6644; background:rgba(255,255,255,0.4); border:1px solid rgba(255,255,255,0.6); border-radius:6px; padding:3px 8px; cursor:pointer; backdrop-filter:blur(8px); }
+  .company-badge { font-size:11px; background:rgba(255,255,255,0.2); color:rgba(255,255,255,0.9); border:1px solid rgba(255,255,255,0.3); border-radius:10px; padding:2px 8px; margin-left:8px; }
+  .btn-logout { font-size:11px; color:rgba(255,255,255,0.85); background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); border-radius:6px; padding:3px 8px; cursor:pointer; }
   .admin-only { display: none; }
   .btn-export {
     width: 100%; padding: 13px;
