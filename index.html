@@ -362,6 +362,9 @@
     <input type="date" id="list-date" onchange="loadList()">
     <button onclick="goToday()">今日</button>
   </div>
+  <div id="export-badge" style="display:none;margin-bottom:10px;">
+    <span style="font-size:12px;background:rgba(13,158,106,0.12);color:#0d9e6a;border:1px solid rgba(13,158,106,0.3);border-radius:20px;padding:4px 12px;font-weight:500;">✅ エクスポート済み</span>
+  </div>
   <!-- 報告状況 -->
   <div class="card" id="attend-check-card" style="display:none;">
     <div class="card-title" style="margin-bottom:8px;">報告状況</div>
@@ -724,7 +727,12 @@ function normAreas(r) {
 
 function renderList(items) {
   window._lastRenderItems = items;
-  checkAttend(document.getElementById("list-date").value);
+  const listDate = document.getElementById("list-date").value;
+  checkAttend(listDate);
+  // エクスポート済みバッジ表示
+  onValue(ref(db, "exported/" + listDate), snap => {
+    document.getElementById("export-badge").style.display = snap.val() ? "" : "none";
+  }, {onlyOnce:true});
   document.getElementById("export-btn").disabled = items.length === 0;
   const container = document.getElementById("list-container");
   if (!items.length) { container.innerHTML='<div class="empty-msg">この日のデータはありません</div>'; return; }
@@ -832,7 +840,11 @@ function renderList(items) {
 }
 
 // ---- 編集 ----
-window.openEdit = function(key) {
+window.openEdit = async function(key) {
+  // エクスポート済みチェック
+  const dateVal = document.getElementById("list-date").value;
+  const expSnap = await new Promise(res => onValue(ref(db, "exported/" + dateVal), res, {onlyOnce:true}));
+  if (expSnap.val() && !confirm("この日付はエクスポート済みです。編集しますか？")) return;
   editingKey = key;
   const cId = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===key)?.companyId || currentUser.companyId) : currentUser.companyId;
   onValue(ref(db,"records/"+cId+"/"+key), snap => {
@@ -877,7 +889,13 @@ window.saveEdit = async function() {
 };
 
 window.deleteRecord = async function(key) {
-  if (!confirm("この記録を削除しますか？")) return;
+  const dateVal = document.getElementById("list-date").value;
+  const expSnap = await new Promise(res => onValue(ref(db, "exported/" + dateVal), res, {onlyOnce:true}));
+  if (expSnap.val()) {
+    if (!confirm("この日付はエクスポート済みです。削除しますか？")) return;
+  } else {
+    if (!confirm("この記録を削除しますか？")) return;
+  }
   const cIdD = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===key)?.companyId || currentUser.companyId) : currentUser.companyId;
   try { await remove(ref(db,"records/"+cIdD+"/"+key)); showToast("削除しました"); }
   catch(e) { showToast("削除エラー: "+e.message); }
@@ -998,6 +1016,11 @@ window.exportExcel = async function() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     showToast(filename + " をダウンロードしました");
+    // エクスポート済みフラグをFirebaseに保存
+    try {
+      await set(ref(db, "exported/" + dateVal), { at: Date.now(), by: currentUser?.email || "" });
+      document.getElementById("export-badge").style.display = "";
+    } catch(e) { console.error("エクスポートフラグ保存エラー:", e); }
   } catch(e) {
     console.error(e);
     showToast('エラー: ' + (e.message || '生成に失敗しました'));
