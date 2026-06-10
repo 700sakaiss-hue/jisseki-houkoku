@@ -395,6 +395,10 @@
       記録を編集
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
+    <div class="form-group">
+      <label>担当者名<span class="required">必須</span></label>
+      <input type="text" id="edit-name" placeholder="例：山田太郎">
+    </div>
     <div id="edit-area-blocks"></div>
     <button class="btn-add-area" onclick="addAreaBlock('edit-area-blocks','edit')" style="margin-bottom:16px">＋ 点検区を追加</button>
     <div class="form-group">
@@ -840,6 +844,7 @@ window.openEdit = function(key) {
       container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, i, a.areaName, a.kinsetsu||0, a.enpo||0, a.detail1||0, a.detail2||0, i>0));
     });
     fillTomorrowRows("edit-tomorrow-list", "edit", normTomorrows(r));
+    document.getElementById("edit-name").value = r.name||"";
     document.getElementById("edit-note").value = r.note||"";
   }, {onlyOnce:true});
   document.getElementById("edit-modal").classList.add("open");
@@ -852,6 +857,8 @@ window.closeModal = function() {
 
 window.saveEdit = async function() {
   if (!editingKey||!db) return;
+  const editName = document.getElementById("edit-name").value.trim();
+  if (!editName) { showToast("担当者名を入力してください"); return; }
   const areas = collectBlocks("edit-area-blocks");
   if (areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
   const tomorrows = collectTomorrowRows("edit-tomorrow-list");
@@ -860,7 +867,7 @@ window.saveEdit = async function() {
     const cId2 = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===editingKey)?.companyId || currentUser.companyId) : currentUser.companyId;
     const snap = await new Promise(res=>onValue(ref(db,"records/"+cId2+"/"+editingKey),res,{onlyOnce:true}));
     await set(ref(db,"records/"+cId2+"/"+editingKey), {
-      ...snap.val(), areas, tomorrows,
+      ...snap.val(), name: editName, areas, tomorrows,
       note:      document.getElementById("edit-note").value.trim(),
       updatedAt: Date.now()
     });
