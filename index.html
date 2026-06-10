@@ -387,6 +387,10 @@
       <label>日付<span class="required">必須</span></label>
       <input type="date" id="attend-date" onchange="initAttend()">
     </div>
+    <!-- 管理者：会社タブ -->
+    <div id="attend-company-tabs" style="display:none; margin-bottom:12px;">
+      <div style="display:flex; gap:6px; flex-wrap:wrap;" id="attend-tab-btns"></div>
+    </div>
     <div class="form-group">
       <label>本日の点検者</label>
       <div id="attend-list"></div>
@@ -394,8 +398,6 @@
     </div>
     <button class="btn-submit" onclick="saveAttend()">保存する</button>
   </div>
-
-
 </div>
 
 <div class="modal-overlay" id="edit-modal">
@@ -1063,33 +1065,55 @@ function collectAttendRows() {
     .map(el => el.value.trim()).filter(v => v !== "");
 }
 
+// 管理者の選択中会社ID
+let adminSelectedCompany = null;
+
 window.initAttend = async function() {
   const date = document.getElementById("attend-date").value;
   if (!date || !db) return;
   const companyId = currentUser?.companyId || "unknown";
-  // 全員: attendance/{companyId}/{date} に保存
-  // 管理者: 全社を読む → attendance/{date} 配下を全部取得
-  const attendRef = currentUser?.isAdmin
-    ? ref(db, "attendance")
-    : ref(db, "attendance/" + companyId + "/" + date);
 
-  onValue(attendRef, snap => {
+  if (currentUser?.isAdmin) {
+    // 管理者：会社タブを表示
+    document.getElementById("attend-company-tabs").style.display = "";
+    const tabBtns = document.getElementById("attend-tab-btns");
+    const companies = Object.entries(COMPANY_MAP).map(([email, info]) => ({
+      companyId: info.companyId, companyName: info.companyName
+    }));
+    // 重複除去
+    const seen = new Set();
+    const uniqueCompanies = companies.filter(c => {
+      if (seen.has(c.companyId)) return false;
+      seen.add(c.companyId);
+      return true;
+    });
+    // 初期選択
+    if (!adminSelectedCompany) adminSelectedCompany = uniqueCompanies[0].companyId;
+
+    tabBtns.innerHTML = uniqueCompanies.map(c =>
+      '<button onclick="selectAttendCompany('' + c.companyId + '','' + c.companyName + '')" '
+      + 'style="padding:6px 14px;border-radius:20px;border:1px solid;font-size:13px;cursor:pointer;transition:all 0.15s;'
+      + (adminSelectedCompany === c.companyId
+        ? 'background:#247658;color:#fff;border-color:#247658;'
+        : 'background:rgba(255,255,255,0.5);color:#247658;border-color:#247658;')
+      + '">' + esc(c.companyName) + '</button>'
+    ).join("");
+
+    loadAttendForCompany(adminSelectedCompany, date);
+  } else {
+    // 一般：自社のみ
+    document.getElementById("attend-company-tabs").style.display = "none";
+    loadAttendForCompany(companyId, date);
+  }
+};
+
+function loadAttendForCompany(cId, date) {
+  onValue(ref(db, "attendance/" + cId + "/" + date), snap => {
     const container = document.getElementById("attend-list");
     container.innerHTML = "";
     attendSeq = 0;
     const val = snap.val();
-    let names = [];
-    if (currentUser?.isAdmin && val) {
-      // 管理者: {companyId: {date: [names]}} 構造から対象日を取得
-      Object.values(val).forEach(companyDates => {
-        if (companyDates && companyDates[date]) {
-          const arr = companyDates[date];
-          if (Array.isArray(arr)) names = names.concat(arr);
-        }
-      });
-    } else if (Array.isArray(val)) {
-      names = val;
-    }
+    const names = Array.isArray(val) ? val : [];
     if (names.length === 0) {
       addAttendRow();
     } else {
@@ -1097,6 +1121,11 @@ window.initAttend = async function() {
     }
     checkAttend(date);
   }, { onlyOnce: true });
+}
+
+window.selectAttendCompany = function(cId, cName) {
+  adminSelectedCompany = cId;
+  initAttend(); // タブ再描画＋データ読み込み
 };
 
 window.saveAttend = async function() {
@@ -1105,10 +1134,9 @@ window.saveAttend = async function() {
   const names = collectAttendRows();
   if (!names.length) { showToast("点検者を入力してください"); return; }
   if (!db) return;
-  const companyId = currentUser?.companyId || "unknown";
-  // 全員: attendance/{companyId}/{date} に保存
+  const cId = currentUser?.isAdmin ? adminSelectedCompany : (currentUser?.companyId || "unknown");
   try {
-    await set(ref(db, "attendance/" + companyId + "/" + date), names);
+    await set(ref(db, "attendance/" + cId + "/" + date), names);
     showToast("保存しました！");
     checkAttend(date);
   } catch(e) { showToast("保存エラー: " + e.message); }
