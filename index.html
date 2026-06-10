@@ -315,6 +315,7 @@
 <div class="tab-bar" id="main-tabbar" style="display:none;">
   <button class="tab-btn active" onclick="switchTab('input')">入力</button>
   <button class="tab-btn" onclick="switchTab('list')">一覧・集計</button>
+  <button class="tab-btn" onclick="switchTab('attend')">点検者登録</button>
 </div>
 
 <div id="page-input" class="page active" style="display:none;">
@@ -363,6 +364,28 @@
   </div>
   <div id="list-container"><div class="loading">読み込み中...</div></div>
   <button class="btn-export admin-only" id="export-btn" onclick="exportExcel()" disabled>Excel様式にエクスポート</button>
+</div>
+
+<div id="page-attend" class="page" style="display:none;">
+  <div class="card">
+    <div class="card-title">点検者登録</div>
+    <div class="form-group">
+      <label>日付<span class="required">必須</span></label>
+      <input type="date" id="attend-date">
+    </div>
+    <div class="form-group">
+      <label>本日の点検者</label>
+      <div id="attend-list"></div>
+      <button class="btn-add-area" onclick="addAttendRow()" style="margin-top:4px">＋ 点検者を追加</button>
+    </div>
+    <button class="btn-submit" onclick="saveAttend()">保存する</button>
+  </div>
+
+  <!-- 未報告チェック -->
+  <div class="card" id="attend-check-card" style="display:none;">
+    <div class="card-title">報告状況</div>
+    <div id="attend-check-result"></div>
+  </div>
 </div>
 
 <div class="modal-overlay" id="edit-modal">
@@ -426,6 +449,7 @@ onAuthStateChanged(auth, user => {
     document.getElementById("main-header").style.display = "";
     document.getElementById("main-tabbar").style.display = "";
     document.getElementById("page-input").style.display = "";
+    document.getElementById("page-attend").style.display = "none";
     document.getElementById("company-badge").textContent = currentUser.companyName;
     document.querySelectorAll(".admin-only").forEach(el => {
       el.style.display = currentUser.isAdmin ? "block" : "none";
@@ -438,6 +462,7 @@ onAuthStateChanged(auth, user => {
     document.getElementById("main-tabbar").style.display = "none";
     document.getElementById("page-input").style.display = "none";
     document.getElementById("page-list").style.display = "none";
+    document.getElementById("page-attend").style.display = "none";
     if (currentListener) { currentListener(); currentListener = null; }
   }
 });
@@ -484,18 +509,24 @@ adjustLayout();
 window.addEventListener('resize', adjustLayout);
 document.getElementById("inp-date").value = todayStr();
 document.getElementById("list-date").value = todayStr();
+document.getElementById("attend-date").value = todayStr();
 document.getElementById("header-date").textContent =
   new Date().toLocaleDateString("ja-JP", {month:"short",day:"numeric",weekday:"short"});
 
 window.goToday = () => { document.getElementById("list-date").value = todayStr(); loadList(); };
 
 window.switchTab = function(tab) {
-  document.querySelectorAll(".tab-btn").forEach((b,i) => b.classList.toggle("active",(i===0)===(tab==="input")));
-  document.getElementById("page-input").classList.toggle("active", tab==="input");
-  document.getElementById("page-list").classList.toggle("active", tab==="list");
-  document.getElementById("page-input").style.display = tab==="input" ? "" : "none";
-  document.getElementById("page-list").style.display  = tab==="list"  ? "" : "none";
-  if (tab==="list") loadList();
+  document.querySelectorAll(".tab-btn").forEach((b,i) => {
+    b.classList.toggle("active", ["input","list","attend"][i] === tab);
+  });
+  document.getElementById("page-input").style.display  = tab==="input"  ? "" : "none";
+  document.getElementById("page-list").style.display   = tab==="list"   ? "" : "none";
+  document.getElementById("page-attend").style.display = tab==="attend" ? "" : "none";
+  document.getElementById("page-input").classList.toggle("active",  tab==="input");
+  document.getElementById("page-list").classList.toggle("active",   tab==="list");
+  document.getElementById("page-attend").classList.toggle("active", tab==="attend");
+  if (tab==="list")   loadList();
+  if (tab==="attend") initAttend();
 };
 
 // ---- 点検区ブロック ----
@@ -964,6 +995,107 @@ window.exportExcel = async function() {
   }
   btn.disabled = false; btn.textContent = "Excel様式にエクスポート";
 };
+
+// ---- 点検者登録 ----
+let attendSeq = 0;
+
+window.addAttendRow = function(value) {
+  value = value || "";
+  const container = document.getElementById("attend-list");
+  const uid = "att-" + (++attendSeq);
+  const isFirst = container.querySelectorAll(".tomorrow-input-row").length === 0;
+  const rmBtn = isFirst ? "" : '<button class="btn-remove-tomorrow" onclick="removeAttendRow('' + uid + '')">×</button>';
+  container.insertAdjacentHTML("beforeend",
+    '<div class="tomorrow-input-row" id="' + uid + '">'
+    + '<input type="text" placeholder="例：北口" value="' + esc(value) + '">'
+    + rmBtn
+    + '</div>');
+};
+
+window.removeAttendRow = function(uid) {
+  document.getElementById(uid)?.remove();
+};
+
+function collectAttendRows() {
+  return Array.from(document.querySelectorAll("#attend-list .tomorrow-input-row input"))
+    .map(el => el.value.trim()).filter(v => v !== "");
+}
+
+window.initAttend = async function() {
+  const date = document.getElementById("attend-date").value;
+  if (!date || !db) return;
+  // 既存データをロード
+  onValue(ref(db, "attendance/" + date), snap => {
+    const container = document.getElementById("attend-list");
+    container.innerHTML = "";
+    attendSeq = 0;
+    const names = snap.val() ? Object.values(snap.val()) : [];
+    if (names.length === 0) {
+      addAttendRow();
+    } else {
+      names.forEach(n => addAttendRow(n));
+    }
+    checkAttend(date);
+  }, { onlyOnce: true });
+};
+
+window.saveAttend = async function() {
+  const date = document.getElementById("attend-date").value;
+  if (!date) { showToast("日付を選択してください"); return; }
+  const names = collectAttendRows();
+  if (!names.length) { showToast("点検者を入力してください"); return; }
+  if (!db) return;
+  try {
+    await set(ref(db, "attendance/" + date), names);
+    showToast("保存しました！");
+    checkAttend(date);
+  } catch(e) { showToast("保存エラー: " + e.message); }
+};
+
+function checkAttend(date) {
+  if (!db || !date) return;
+  // 登録済み点検者を取得
+  onValue(ref(db, "attendance/" + date), snapA => {
+    const registered = snapA.val() ? Object.values(snapA.val()) : [];
+    if (!registered.length) {
+      document.getElementById("attend-check-card").style.display = "none";
+      return;
+    }
+    // 当日の報告を取得
+    const companyId = currentUser?.companyId || "unknown";
+    const recordsRef = currentUser?.isAdmin ? ref(db, "records") : ref(db, "records/" + companyId);
+    onValue(recordsRef, snapR => {
+      const reported = new Set();
+      if (currentUser?.isAdmin) {
+        snapR.forEach(compSnap => {
+          compSnap.forEach(c => {
+            const v = c.val();
+            if (v.date === date) reported.add(v.name);
+          });
+        });
+      } else {
+        snapR.forEach(c => {
+          const v = c.val();
+          if (v.date === date) reported.add(v.name);
+        });
+      }
+
+      const unreported = registered.filter(n => !reported.has(n));
+      const card = document.getElementById("attend-check-card");
+      const result = document.getElementById("attend-check-result");
+      card.style.display = "";
+
+      if (unreported.length === 0) {
+        result.innerHTML = '<div style="text-align:center;padding:12px;font-size:15px;color:#0d9e6a;font-weight:500;">✅ 全員報告済みです！</div>';
+      } else {
+        result.innerHTML = '<div style="background:rgba(226,75,74,0.08);border:1px solid rgba(226,75,74,0.2);border-radius:10px;padding:12px 14px;">'
+          + '<div style="font-size:13px;font-weight:500;color:#e24b4a;margin-bottom:8px;">⚠️ 未報告の点検者がいます</div>'
+          + unreported.map(n => '<div style="font-size:14px;color:#292a2d;padding:4px 0;border-bottom:1px dashed rgba(226,75,74,0.15);">・' + esc(n) + '</div>').join("")
+          + '</div>';
+      }
+    }, { onlyOnce: true });
+  }, { onlyOnce: true });
+}
 
 function showToast(msg) {
   const t=document.getElementById("toast");
