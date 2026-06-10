@@ -363,7 +363,10 @@
     <button onclick="goToday()">今日</button>
   </div>
   <div id="export-badge" style="display:none;margin-bottom:10px;">
-    <span style="font-size:12px;background:#FFF450;color:#5a3e00;border-radius:10px;padding:6px 12px;font-weight:500;line-height:1.6;display:inline-block;">✅ 本日エクスポート済み。<br>※報告内容変更の場合は、必ず管理者へご連絡お願いいたします。</span>
+    <div style="background:#FFF450;color:#5a3e00;border-radius:10px;padding:8px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+      <span style="font-size:12px;font-weight:500;line-height:1.6;">✅ 本日エクスポート済み。<br>※報告内容変更の場合は、必ず管理者へご連絡お願いいたします。</span>
+      <button id="btn-cancel-export" onclick="cancelExport()" style="display:none;font-size:11px;background:rgba(90,62,0,0.15);color:#5a3e00;border:1px solid rgba(90,62,0,0.3);border-radius:6px;padding:3px 8px;cursor:pointer;white-space:nowrap;flex-shrink:0;">解除</button>
+    </div>
   </div>
   <!-- 報告状況 -->
   <div class="card" id="attend-check-card" style="display:none;">
@@ -463,6 +466,8 @@ onAuthStateChanged(auth, user => {
     document.querySelectorAll(".admin-only").forEach(el => {
       el.style.display = currentUser.isAdmin ? "block" : "none";
     });
+    const cancelBtn = document.getElementById("btn-cancel-export");
+    if (cancelBtn) cancelBtn.style.display = currentUser.isAdmin ? "" : "none";
     adjustLayout();
   } else {
     currentUser = null;
@@ -1151,6 +1156,19 @@ function checkAttend(date) {
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
+
+// ---- エクスポート済み解除 ----
+window.cancelExport = async function() {
+  if (!confirm("エクスポート済みを解除しますか？")) return;
+  const dateVal = document.getElementById("list-date").value;
+  try {
+    await remove(ref(db, "exported/" + dateVal));
+    document.getElementById("export-badge").style.display = "none";
+    showToast("エクスポート済みを解除しました");
+  } catch(e) {
+    showToast("解除エラー: " + e.message);
+  }
+};
 
 function showToast(msg) {
   const t=document.getElementById("toast");
