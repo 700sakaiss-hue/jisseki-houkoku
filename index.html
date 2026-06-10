@@ -1061,12 +1061,27 @@ function collectAttendRows() {
 window.initAttend = async function() {
   const date = document.getElementById("attend-date").value;
   if (!date || !db) return;
-  // 既存データをロード
-  onValue(ref(db, "attendance/" + date), snap => {
+  const companyId = currentUser?.companyId || "unknown";
+  // 管理者：全社、一般：自社のみ
+  const attendRef = currentUser?.isAdmin
+    ? ref(db, "attendance/" + date)
+    : ref(db, "attendance/" + companyId + "/" + date);
+  onValue(attendRef, snap => {
     const container = document.getElementById("attend-list");
     container.innerHTML = "";
     attendSeq = 0;
-    const names = snap.val() ? Object.values(snap.val()) : [];
+    const val = snap.val();
+    // 管理者は全社をフラットに結合
+    let names = [];
+    if (currentUser?.isAdmin && val && typeof val === "object") {
+      // 管理者: {companyId: [names]} または [names] の両対応
+      Object.values(val).forEach(v => {
+        if (Array.isArray(v)) names = names.concat(v);
+        else if (typeof v === "string") names.push(v);
+      });
+    } else if (Array.isArray(val)) {
+      names = val;
+    }
     if (names.length === 0) {
       addAttendRow();
     } else {
@@ -1082,8 +1097,13 @@ window.saveAttend = async function() {
   const names = collectAttendRows();
   if (!names.length) { showToast("点検者を入力してください"); return; }
   if (!db) return;
+  const companyId = currentUser?.companyId || "unknown";
+  // 管理者：全社共通パス、一般：自社パス
+  const attendPath = currentUser?.isAdmin
+    ? "attendance/" + date
+    : "attendance/" + companyId + "/" + date;
   try {
-    await set(ref(db, "attendance/" + date), names);
+    await set(ref(db, attendPath), names);
     showToast("保存しました！");
     checkAttend(date);
   } catch(e) { showToast("保存エラー: " + e.message); }
@@ -1093,14 +1113,30 @@ function checkAttend(date) {
   if (!db || !date) return;
   const card   = document.getElementById("attend-check-card");
   const result = document.getElementById("attend-check-result");
+  const companyId = currentUser?.companyId || "unknown";
 
-  // 登録済み点検者を取得
-  onValue(ref(db, "attendance/" + date), snapA => {
-    const registered = snapA.val() ? Object.values(snapA.val()) : [];
+  // 点検者を取得（管理者：全社、一般：自社）
+  const attendRef = currentUser?.isAdmin
+    ? ref(db, "attendance/" + date)
+    : ref(db, "attendance/" + companyId + "/" + date);
 
-    // 当日の報告を取得
-    const companyId = currentUser?.companyId || "unknown";
-    const recordsRef = currentUser?.isAdmin ? ref(db, "records") : ref(db, "records/" + companyId);
+  onValue(attendRef, snapA => {
+    const val = snapA.val();
+    let registered = [];
+    if (currentUser?.isAdmin && val && typeof val === "object") {
+      Object.values(val).forEach(v => {
+        if (Array.isArray(v)) registered = registered.concat(v);
+        else if (typeof v === "string") registered.push(v);
+      });
+    } else if (Array.isArray(val)) {
+      registered = val;
+    }
+
+    // 報告を取得（管理者：全社、一般：自社）
+    const recordsRef = currentUser?.isAdmin
+      ? ref(db, "records")
+      : ref(db, "records/" + companyId);
+
     onValue(recordsRef, snapR => {
       const reported = new Set();
       if (currentUser?.isAdmin) {
@@ -1121,25 +1157,19 @@ function checkAttend(date) {
       const registeredSet = new Set(registered);
       const extraReported = [...reported].filter(n => !registeredSet.has(n));
 
-      // 登録者も報告者もいない場合は非表示
       if (!registered.length && !extraReported.length) {
         card.style.display = "none";
         return;
       }
-
       card.style.display = "";
 
-      // タグ生成
       const tags = [
-        // 登録済み＋報告あり → 緑
         ...registered.filter(n => reported.has(n)).map(n =>
           '<span style="font-size:12px;background:rgba(13,158,106,0.12);color:#0d9e6a;border:1px solid rgba(13,158,106,0.25);border-radius:20px;padding:3px 10px;white-space:nowrap;">✅ ' + esc(n) + '</span>'
         ),
-        // 登録済み＋未報告 → 赤
         ...registered.filter(n => !reported.has(n)).map(n =>
           '<span style="font-size:12px;background:rgba(226,75,74,0.1);color:#e24b4a;border:1px solid rgba(226,75,74,0.25);border-radius:20px;padding:3px 10px;white-space:nowrap;">✖️ ' + esc(n) + '</span>'
         ),
-        // 登録外＋報告あり → 黒
         ...extraReported.map(n =>
           '<span style="font-size:12px;background:rgba(41,42,45,0.08);color:#292a2d;border:1px solid rgba(41,42,45,0.2);border-radius:20px;padding:3px 10px;white-space:nowrap;">❓ ' + esc(n) + '</span>'
         ),
