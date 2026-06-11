@@ -41,8 +41,10 @@
   }
   .header-inner {
     max-width: 580px; margin: 0 auto;
-    display: flex; align-items: flex-start; justify-content: space-between; width: 100%;
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
   }
+  .header-logo { height: 40px; width: auto; display: block; }
+  @media (min-width: 580px) { .header-logo { height: 80px; } }
   header h1 { font-size: 15px; font-weight: 500; color: white; }
   header span { font-size: 13px; opacity: 0.8; }
   .tab-bar {
@@ -304,19 +306,18 @@
 
 <header id="main-header" style="display:none;">
   <div class="header-inner">
-    <!-- 左列 -->
-    <div style="display:flex;flex-direction:column;gap:3px;">
-      <div style="font-size:11px;opacity:0.75;letter-spacing:0.08em;font-weight:700;color:#a8d5b5;">堺総合サービス</div>
-      <h1 style="font-size:15px;">稼働報告アプリ</h1>
-      <span id="company-badge" class="company-badge" style="margin-left:0;align-self:flex-start;"></span>
-    </div>
+    <!-- 左列：ロゴ -->
+    <img src="logo.png" class="header-logo" alt="堺総合サービス">
     <!-- 右列 -->
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
       <div style="display:flex;gap:6px;">
         <button onclick="location.reload()" style="font-size:13px;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:3px 8px;cursor:pointer;">↻ 更新</button>
         <button class="btn-logout" onclick="doLogout()" style="font-size:11px;padding:3px 8px;">ログアウト</button>
       </div>
-      <span id="header-date" style="font-size:11px;opacity:0.8;"></span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+        <span id="header-date" style="font-size:11px;opacity:0.8;"></span>
+        <span id="company-badge" class="company-badge" style="margin-left:0;"></span>
+      </div>
     </div>
   </div>
 </header>
