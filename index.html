@@ -687,8 +687,8 @@ window.submitRecord = async function() {
   const areas = collectBlocks("area-blocks");
   if (!areas.length || areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
   const tomorrows = collectTomorrowRows("inp-tomorrow-list");
-  if (!tomorrows.length) { showToast("明日の点検区（通常点検）を入力してください"); return; }
   const tomorrowsKizumi = collectTomorrowRows("inp-tomorrow-kizumi-list");
+  if (!tomorrows.length && !tomorrowsKizumi.length) { showToast("明日の点検区（通常点検またはキズミー）を入力してください"); return; }
   if (!db) { showToast("Firebase未設定のため保存できません"); return; }
   const btn = document.getElementById("submit-btn");
   btn.disabled=true; btn.textContent="送信中...";
@@ -927,8 +927,8 @@ window.saveEdit = async function() {
   const areas = collectBlocks("edit-area-blocks");
   if (areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
   const tomorrows = collectTomorrowRows("edit-tomorrow-list");
-  if (!tomorrows.length) { showToast("明日の点検区（通常点検）を入力してください"); return; }
   const tomorrowsKizumi = collectTomorrowRows("edit-tomorrow-kizumi-list");
+  if (!tomorrows.length && !tomorrowsKizumi.length) { showToast("明日の点検区（通常点検またはキズミー）を入力してください"); return; }
   try {
     const cId2 = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===editingKey)?.companyId || currentUser.companyId) : currentUser.companyId;
     const snap = await new Promise(res=>onValue(ref(db,"records/"+cId2+"/"+editingKey),res,{onlyOnce:true}));
