@@ -37,16 +37,22 @@
     background: #247658;
     border-bottom: none;
     color: white; padding: 10px 16px;
-    display: flex; align-items: center; justify-content: space-between;
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  }
+  .header-inner {
+    max-width: 580px; margin: 0 auto;
+    display: flex; align-items: flex-start; justify-content: space-between; width: 100%;
   }
   header h1 { font-size: 15px; font-weight: 500; color: white; }
   header span { font-size: 13px; opacity: 0.8; }
   .tab-bar {
-    display: flex;
     background: #247658;
     border-bottom: 2px solid #1a5e45;
     position: fixed; top: 0; left: 0; right: 0; z-index: 99;
+  }
+  .tab-bar-inner {
+    max-width: 580px; margin: 0 auto;
+    display: flex;
   }
   .tab-btn {
     flex: 1; padding: 12px 8px; border: none; background: none;
@@ -297,7 +303,7 @@
 </div>
 
 <header id="main-header" style="display:none;">
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;width:100%;">
+  <div class="header-inner">
     <!-- 左列 -->
     <div style="display:flex;flex-direction:column;gap:3px;">
       <div style="font-size:11px;opacity:0.75;letter-spacing:0.08em;font-weight:700;color:#a8d5b5;">堺総合サービス</div>
@@ -316,9 +322,11 @@
 </header>
 
 <div class="tab-bar" id="main-tabbar" style="display:none;">
-  <button class="tab-btn active" onclick="switchTab('input')">入力</button>
-  <button class="tab-btn" onclick="switchTab('list')">一覧・集計</button>
-  <button class="tab-btn" onclick="switchTab('attend')">点検者登録</button>
+  <div class="tab-bar-inner" style="width:100%;">
+    <button class="tab-btn active" onclick="switchTab('input')">入力</button>
+    <button class="tab-btn" onclick="switchTab('list')">一覧・集計</button>
+    <button class="tab-btn" onclick="switchTab('attend')">点検者登録</button>
+  </div>
 </div>
 
 <div id="page-input" class="page active" style="display:none;">
