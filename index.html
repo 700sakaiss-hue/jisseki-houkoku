@@ -552,7 +552,7 @@ window.switchTab = function(tab) {
 // ---- 点検区ブロック ----
 let blockSeq = 0;
 
-function makeBlockHtml(uid, idx, areaVal, k, e, d1, d2, removable) {
+function makeBlockHtml(uid, idx, areaVal, k, e, d1, d2, kizumi, removable) {
   const rmBtn = removable
     ? '<button class="btn-remove-area" onclick="removeBlock(\'' + uid + '\')">×</button>'
     : "";
@@ -569,6 +569,7 @@ function makeBlockHtml(uid, idx, areaVal, k, e, d1, d2, removable) {
     + ci("遠方点検", "ce-" + uid, e)
     + ci("詳細点検1", "cd1-" + uid, d1)
     + ci("詳細点検2", "cd2-" + uid, d2)
+    + ci("キズミー", "ckz-" + uid, kizumi)
     + '</div></div>';
 }
 
@@ -585,7 +586,7 @@ window.addAreaBlock = function(containerId, prefix) {
   const container = document.getElementById(containerId);
   const idx = container.querySelectorAll(".area-block").length;
   const uid = prefix + "-" + (++blockSeq);
-  container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, idx, "", 0,0,0,0, idx>0));
+  container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, idx, "", 0,0,0,0,0, idx>0));
 };
 
 window.removeBlock = function(uid) {
@@ -605,6 +606,7 @@ function collectBlocks(containerId) {
       enpo:     parseInt(document.getElementById("ce-" + uid)?.value)||0,
       detail1:  parseInt(document.getElementById("cd1-" + uid)?.value)||0,
       detail2:  parseInt(document.getElementById("cd2-" + uid)?.value)||0,
+      kizumi:   parseInt(document.getElementById("ckz-" + uid)?.value)||0,
     };
   });
 }
@@ -658,7 +660,7 @@ function normTomorrows(r) {
 (function() {
   const uid = "inp-" + (++blockSeq);
   document.getElementById("area-blocks").insertAdjacentHTML(
-    "beforeend", makeBlockHtml(uid, 0, "", 0,0,0,0, false));
+    "beforeend", makeBlockHtml(uid, 0, "", 0,0,0,0,0, false));
   addTomorrowRow("inp-tomorrow-list", "inp");
 })();
 
@@ -686,7 +688,7 @@ window.submitRecord = async function() {
     const c = document.getElementById("area-blocks");
     c.innerHTML = "";
     const uid = "inp-" + (++blockSeq);
-    c.insertAdjacentHTML("beforeend", makeBlockHtml(uid,0,"",0,0,0,0,false));
+    c.insertAdjacentHTML("beforeend", makeBlockHtml(uid,0,"",0,0,0,0,0,false));
     document.getElementById("inp-note").value = "";
     resetTomorrowRows("inp-tomorrow-list", "inp");
     document.getElementById("list-date").value = date;
@@ -734,7 +736,7 @@ window.loadList = function() {
 
 function normAreas(r) {
   if (r.areas && Array.isArray(r.areas)) return r.areas;
-  return [{areaName:r.area||"", kinsetsu:r.kinsetsu||0, enpo:r.enpo||0, detail1:r.detail1||0, detail2:r.detail2||0}];
+  return [{areaName:r.area||"", kinsetsu:r.kinsetsu||0, enpo:r.enpo||0, detail1:r.detail1||0, detail2:r.detail2||0, kizumi:r.kizumi||0}];
 }
 
 function renderList(items) {
@@ -752,17 +754,19 @@ function renderList(items) {
   const areaMap = {};
   items.forEach(r => normAreas(r).forEach(a => {
     const k = a.areaName || "（区名なし）";
-    if (!areaMap[k]) areaMap[k] = {kinsetsu:0, enpo:0, detail1:0, detail2:0};
+    if (!areaMap[k]) areaMap[k] = {kinsetsu:0, enpo:0, detail1:0, detail2:0, kizumi:0};
     areaMap[k].kinsetsu += a.kinsetsu||0;
     areaMap[k].enpo     += a.enpo||0;
     areaMap[k].detail1  += a.detail1||0;
     areaMap[k].detail2  += a.detail2||0;
+    areaMap[k].kizumi   += a.kizumi||0;
   }));
 
-  const totals = {kinsetsu:0, enpo:0, detail1:0, detail2:0};
+  const totals = {kinsetsu:0, enpo:0, detail1:0, detail2:0, kizumi:0};
   Object.values(areaMap).forEach(v => {
     totals.kinsetsu+=v.kinsetsu; totals.enpo+=v.enpo;
     totals.detail1+=v.detail1;  totals.detail2+=v.detail2;
+    totals.kizumi+=v.kizumi;
   });
 
   const AREA_ORDER = [
@@ -780,8 +784,8 @@ function renderList(items) {
 
   const rows = sortedEntries.map(([name, v]) =>
     '<tr><td>' + esc(name) + '</td>'
-    + cell(v.kinsetsu) + cell(v.enpo) + cell(v.detail1) + cell(v.detail2)
-    + '<td>' + (v.kinsetsu+v.enpo+v.detail1+v.detail2) + '</td></tr>'
+    + cell(v.kinsetsu) + cell(v.enpo) + cell(v.detail1) + cell(v.detail2) + cell(v.kizumi||0)
+    + '<td>' + (v.kinsetsu+v.enpo+v.detail1+v.detail2+(v.kizumi||0)) + '</td></tr>'
   ).join("");
 
   // 次回点検区：全レコードのtomorrowsを集約
@@ -809,12 +813,12 @@ function renderList(items) {
   const summaryHtml = '<div class="area-summary">'
     + '<div class="area-summary-title">区別集計</div>'
     + '<table class="summary-table"><thead><tr>'
-    + '<th>点検区</th><th>近接</th><th>遠方</th><th>詳細1</th><th>詳細2</th><th>合計</th>'
+    + '<th>点検区</th><th>近接</th><th>遠方</th><th>詳細1</th><th>詳細2</th><th>キズミー</th><th>合計</th>'
     + '</tr></thead><tbody>'
     + rows
     + '<tr><td>合計</td>'
-    + cell(totals.kinsetsu) + cell(totals.enpo) + cell(totals.detail1) + cell(totals.detail2)
-    + '<td>' + (totals.kinsetsu+totals.enpo+totals.detail1+totals.detail2) + '</td></tr>'
+    + cell(totals.kinsetsu) + cell(totals.enpo) + cell(totals.detail1) + cell(totals.detail2) + cell(totals.kizumi)
+    + '<td>' + (totals.kinsetsu+totals.enpo+totals.detail1+totals.detail2+totals.kizumi) + '</td></tr>'
     + '</tbody></table></div>'
     + tomorrowHtml;
 
@@ -830,6 +834,7 @@ function renderList(items) {
       + '<div class="count-badge"><span class="cb-label">遠方</span><span class="cb-val">' + (a.enpo||0) + '</span></div>'
       + '<div class="count-badge"><span class="cb-label">詳細1</span><span class="cb-val">' + (a.detail1||0) + '</span></div>'
       + '<div class="count-badge"><span class="cb-label">詳細2</span><span class="cb-val">' + (a.detail2||0) + '</span></div>'
+          + '<div class="count-badge"><span class="cb-label">キズミー</span><span class="cb-val">' + (a.kizumi||0) + '</span></div>'
       + '</div></div>'
     ).join("");
     return '<div class="record-item">'
@@ -865,7 +870,7 @@ window.openEdit = async function(key) {
     container.innerHTML = "";
     normAreas(r).forEach((a,i) => {
       const uid = "edit-" + (++blockSeq);
-      container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, i, a.areaName, a.kinsetsu||0, a.enpo||0, a.detail1||0, a.detail2||0, i>0));
+      container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, i, a.areaName, a.kinsetsu||0, a.enpo||0, a.detail1||0, a.detail2||0, a.kizumi||0, i>0));
     });
     fillTomorrowRows("edit-tomorrow-list", "edit", normTomorrows(r));
     document.getElementById("edit-name").value = r.name||"";
@@ -972,11 +977,12 @@ window.exportExcel = async function() {
       areas.forEach(a => {
         const k = (a.areaName||"").trim();
         if (!k) return;
-        if (!areaMap[k]) areaMap[k] = {enpo:0, kinsetsu:0, detail1:0, detail2:0};
+        if (!areaMap[k]) areaMap[k] = {enpo:0, kinsetsu:0, detail1:0, detail2:0, kizumi:0};
         areaMap[k].enpo     += a.enpo||0;
         areaMap[k].kinsetsu += a.kinsetsu||0;
         areaMap[k].detail1  += a.detail1||0;
         areaMap[k].detail2  += a.detail2||0;
+        areaMap[k].kizumi   += a.kizumi||0;
       });
     });
 
@@ -988,6 +994,7 @@ window.exportExcel = async function() {
       if (v.kinsetsu) newSheet.getRow(rowIdx).getCell(9).value = v.kinsetsu;
       if (v.detail1)  newSheet.getRow(rowIdx).getCell(10).value = v.detail1;
       if (v.detail2)  newSheet.getRow(rowIdx).getCell(11).value = v.detail2;
+      if (v.kizumi)   newSheet.getRow(rowIdx).getCell(12).value = v.kizumi;
       newSheet.getRow(rowIdx).commit();
       written++;
     });
