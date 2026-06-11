@@ -408,6 +408,7 @@
       <label>本日の点検者</label>
       <div id="attend-list"></div>
       <button class="btn-add-area" onclick="addAttendRow()" style="margin-top:4px">＋ 点検者を追加</button>
+      <button onclick="clearAllAttend()" style="margin-top:8px;width:100%;padding:10px;border:1.5px solid rgba(226,75,74,0.4);background:rgba(226,75,74,0.08);color:#e24b4a;border-radius:12px;font-size:14px;cursor:pointer;">全員削除</button>
     </div>
     <button class="btn-submit" onclick="saveAttend()">保存する</button>
   </div>
@@ -1190,6 +1191,13 @@ function loadAttendForCompany(cId, date) {
   }, { onlyOnce: true });
 }
 
+window.clearAllAttend = function() {
+  if (!confirm("登録中の点検者を全員削除しますか？")) return;
+  const container = document.getElementById("attend-list");
+  container.innerHTML = "";
+  attendSeq = 0;
+};
+
 window.selectAttendCompany = function(cId, cName) {
   adminSelectedCompany = cId;
   initAttend(); // タブ再描画＋データ読み込み
@@ -1199,7 +1207,6 @@ window.saveAttend = async function() {
   const date = document.getElementById("attend-date").value;
   if (!date) { showToast("日付を選択してください"); return; }
   const names = collectAttendRows();
-  if (!names.length) { showToast("点検者を入力してください"); return; }
   if (!db) return;
   const cId = currentUser?.isAdmin ? adminSelectedCompany : (currentUser?.companyId || "unknown");
   try {
