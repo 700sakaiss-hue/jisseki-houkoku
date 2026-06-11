@@ -310,12 +310,14 @@
     <img src="logo.png" class="header-logo" alt="堺総合サービス">
     <!-- 右列 -->
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-      <div style="display:flex;gap:6px;">
-        <button onclick="location.reload()" style="font-size:13px;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:3px 8px;cursor:pointer;">↻ 更新</button>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="company-badge" class="company-badge" style="margin-left:0;"></span>
         <button class="btn-logout" onclick="doLogout()" style="font-size:11px;padding:3px 8px;">ログアウト</button>
       </div>
-      <span id="company-badge" class="company-badge" style="margin-left:0;align-self:flex-end;"></span>
-      <span id="header-date" style="font-size:11px;opacity:0.8;"></span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="header-date" style="font-size:11px;opacity:0.8;"></span>
+        <button onclick="location.reload()" style="font-size:13px;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:3px 8px;cursor:pointer;">↻ 更新</button>
+      </div>
     </div>
   </div>
 </header>
