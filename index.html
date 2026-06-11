@@ -346,9 +346,14 @@
   <div class="card">
     <div class="card-title">補足情報</div>
     <div class="form-group">
-      <label>明日の点検区<span class="required">必須</span></label>
+      <label>明日の点検区（通常点検）<span class="required">必須</span></label>
       <div id="inp-tomorrow-list"></div>
-      <button class="btn-add-area" onclick="addTomorrowRow('inp-tomorrow-list','inp')" style="margin-top:4px">＋ 明日の点検区を追加</button>
+      <button class="btn-add-area" onclick="addTomorrowRow('inp-tomorrow-list','inp')" style="margin-top:4px">＋ 点検区を追加</button>
+    </div>
+    <div class="form-group">
+      <label>明日の点検区（キズミー）</label>
+      <div id="inp-tomorrow-kizumi-list"></div>
+      <button class="btn-add-area" onclick="addTomorrowRow('inp-tomorrow-kizumi-list','inp-kz')" style="margin-top:4px">＋ 点検区を追加</button>
     </div>
     <div class="form-group">
       <label>備考（任意）</label>
@@ -413,9 +418,14 @@
     <div id="edit-area-blocks"></div>
     <button class="btn-add-area" onclick="addAreaBlock('edit-area-blocks','edit')" style="margin-bottom:16px">＋ 点検区を追加</button>
     <div class="form-group">
-      <label>明日の点検区<span class="required">必須</span></label>
+      <label>明日の点検区（通常点検）<span class="required">必須</span></label>
       <div id="edit-tomorrow-list"></div>
-      <button class="btn-add-area" onclick="addTomorrowRow('edit-tomorrow-list','edit')" style="margin-top:4px">＋ 明日の点検区を追加</button>
+      <button class="btn-add-area" onclick="addTomorrowRow('edit-tomorrow-list','edit')" style="margin-top:4px">＋ 点検区を追加</button>
+    </div>
+    <div class="form-group">
+      <label>明日の点検区（キズミー）</label>
+      <div id="edit-tomorrow-kizumi-list"></div>
+      <button class="btn-add-area" onclick="addTomorrowRow('edit-tomorrow-kizumi-list','edit-kz')" style="margin-top:4px">＋ 点検区を追加</button>
     </div>
     <div class="form-group"><label>備考</label><textarea id="edit-note"></textarea></div>
     <button class="btn-submit" onclick="saveEdit()">保存する</button>
@@ -655,6 +665,10 @@ function normTomorrows(r) {
   if (r.tomorrow) return [r.tomorrow];
   return [];
 }
+function normTomorrowsKizumi(r) {
+  if (r.tomorrowsKizumi && Array.isArray(r.tomorrowsKizumi)) return r.tomorrowsKizumi;
+  return [];
+}
 
 // 初期化
 (function() {
@@ -662,6 +676,7 @@ function normTomorrows(r) {
   document.getElementById("area-blocks").insertAdjacentHTML(
     "beforeend", makeBlockHtml(uid, 0, "", 0,0,0,0,0, false));
   addTomorrowRow("inp-tomorrow-list", "inp");
+  addTomorrowRow("inp-tomorrow-kizumi-list", "inp-kz");
 })();
 
 // ---- 送信 ----
@@ -672,7 +687,8 @@ window.submitRecord = async function() {
   const areas = collectBlocks("area-blocks");
   if (!areas.length || areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
   const tomorrows = collectTomorrowRows("inp-tomorrow-list");
-  if (!tomorrows.length) { showToast("明日の点検区を入力してください"); return; }
+  if (!tomorrows.length) { showToast("明日の点検区（通常点検）を入力してください"); return; }
+  const tomorrowsKizumi = collectTomorrowRows("inp-tomorrow-kizumi-list");
   if (!db) { showToast("Firebase未設定のため保存できません"); return; }
   const btn = document.getElementById("submit-btn");
   btn.disabled=true; btn.textContent="送信中...";
@@ -682,6 +698,7 @@ window.submitRecord = async function() {
       date, name, areas,
       note:      document.getElementById("inp-note").value.trim(),
       tomorrows,
+      tomorrowsKizumi,
       updatedAt: Date.now()
     });
     showToast("送信しました！");
@@ -691,6 +708,7 @@ window.submitRecord = async function() {
     c.insertAdjacentHTML("beforeend", makeBlockHtml(uid,0,"",0,0,0,0,0,false));
     document.getElementById("inp-note").value = "";
     resetTomorrowRows("inp-tomorrow-list", "inp");
+    resetTomorrowRows("inp-tomorrow-kizumi-list", "inp-kz");
     document.getElementById("list-date").value = date;
     switchTab("list");
   } catch(e) { showToast("送信エラー: "+e.message); }
@@ -791,22 +809,38 @@ function renderList(items) {
   // 次回点検区：全レコードのtomorrowsを集約
   const NASHI = ["無し","なし","ナシ","無"];
   const tomorrowSet = new Set();
+  const tomorrowKizumiSet = new Set();
   items.forEach(r => {
     normTomorrows(r).forEach(t => {
       const trimmed = t.trim();
       if (trimmed && !NASHI.includes(trimmed)) tomorrowSet.add(trimmed);
+    });
+    normTomorrowsKizumi(r).forEach(t => {
+      const trimmed = t.trim();
+      if (trimmed && !NASHI.includes(trimmed)) tomorrowKizumiSet.add(trimmed);
     });
   });
   const tomorrowAreas = [
     ...AREA_ORDER.filter(k => tomorrowSet.has(k)),
     ...[...tomorrowSet].filter(k => !AREA_ORDER.includes(k))
   ];
+  const tomorrowKizumiAreas = [
+    ...AREA_ORDER.filter(k => tomorrowKizumiSet.has(k)),
+    ...[...tomorrowKizumiSet].filter(k => !AREA_ORDER.includes(k))
+  ];
 
   const tomorrowHtml = '<div class="area-summary">'
-    + '<div class="area-summary-title">次回点検区</div>'
+    + '<div class="area-summary-title">次回点検区（通常点検）</div>'
     + '<div class="tomorrow-list">'
     + (tomorrowAreas.length
         ? tomorrowAreas.map(t => '<span class="tomorrow-tag">' + esc(t) + '</span>').join("")
+        : '<span style="font-size:13px;color:var(--gray-400)">データなし</span>')
+    + '</div></div>'
+    + '<div class="area-summary" style="margin-top:8px;">'
+    + '<div class="area-summary-title">次回点検区（キズミー）</div>'
+    + '<div class="tomorrow-list">'
+    + (tomorrowKizumiAreas.length
+        ? tomorrowKizumiAreas.map(t => '<span class="tomorrow-tag">' + esc(t) + '</span>').join("")
         : '<span style="font-size:13px;color:var(--gray-400)">データなし</span>')
     + '</div></div>';
 
@@ -849,7 +883,8 @@ function renderList(items) {
       + '</div></div>'
       + aHtml
       + (r.note ? '<div class="record-note">📝 ' + esc(r.note) + '</div>' : '')
-      + (tomorrows.length ? '<div class="record-tomorrow">明日: ' + tomorrows.map(esc).join("、") + '</div>' : '')
+      + (tomorrows.length ? '<div class="record-tomorrow">明日（通常）: ' + tomorrows.map(esc).join("、") + '</div>' : '')
+      + (normTomorrowsKizumi(r).length ? '<div class="record-tomorrow">明日（キズミー）: ' + normTomorrowsKizumi(r).map(esc).join("、") + '</div>' : '')
       + '</div>';
   }).join("");
 
@@ -873,6 +908,7 @@ window.openEdit = async function(key) {
       container.insertAdjacentHTML("beforeend", makeBlockHtml(uid, i, a.areaName, a.kinsetsu||0, a.enpo||0, a.detail1||0, a.detail2||0, a.kizumi||0, i>0));
     });
     fillTomorrowRows("edit-tomorrow-list", "edit", normTomorrows(r));
+    fillTomorrowRows("edit-tomorrow-kizumi-list", "edit-kz", normTomorrowsKizumi(r));
     document.getElementById("edit-name").value = r.name||"";
     document.getElementById("edit-note").value = r.note||"";
   }, {onlyOnce:true});
@@ -891,12 +927,13 @@ window.saveEdit = async function() {
   const areas = collectBlocks("edit-area-blocks");
   if (areas.some(a=>!a.areaName)) { showToast("点検区名を入力してください"); return; }
   const tomorrows = collectTomorrowRows("edit-tomorrow-list");
-  if (!tomorrows.length) { showToast("明日の点検区を入力してください"); return; }
+  if (!tomorrows.length) { showToast("明日の点検区（通常点検）を入力してください"); return; }
+  const tomorrowsKizumi = collectTomorrowRows("edit-tomorrow-kizumi-list");
   try {
     const cId2 = currentUser?.isAdmin ? (window._lastRenderItems?.find(x=>x.key===editingKey)?.companyId || currentUser.companyId) : currentUser.companyId;
     const snap = await new Promise(res=>onValue(ref(db,"records/"+cId2+"/"+editingKey),res,{onlyOnce:true}));
     await set(ref(db,"records/"+cId2+"/"+editingKey), {
-      ...snap.val(), name: editName, areas, tomorrows,
+      ...snap.val(), name: editName, areas, tomorrows, tomorrowsKizumi,
       note:      document.getElementById("edit-note").value.trim(),
       updatedAt: Date.now()
     });
@@ -1000,16 +1037,22 @@ window.exportExcel = async function() {
     });
     if (written === 0) { showToast("一致する区名がありませんでした"); return; }
 
-    // 次回点検区（複数対応）
+    // 次回点検区（通常・キズミー別）
     const TANTO_NAME = "南\u3000元樹\u3000080-1484-5774";
     const NASHI = ["無し","なし","ナシ","無"];
     const tomorrowSet = new Set();
+    const tomorrowKizumiSet = new Set();
     window._lastRenderItems.forEach(r => {
       normTomorrows(r).forEach(t => {
         const trimmed = t.trim();
         if (trimmed && !NASHI.includes(trimmed)) tomorrowSet.add(trimmed);
       });
+      normTomorrowsKizumi(r).forEach(t => {
+        const trimmed = t.trim();
+        if (trimmed && !NASHI.includes(trimmed)) tomorrowKizumiSet.add(trimmed);
+      });
     });
+    // 通常点検の次回点検区
     tomorrowSet.forEach(areaName => {
       const rowIdx = AREA_ROW_MAP[areaName];
       if (!rowIdx) return;
@@ -1022,6 +1065,15 @@ window.exportExcel = async function() {
       row.getCell(18).value = TANTO_NAME;
       row.getCell(19).value = "○";
       row.getCell(20).value = TANTO_NAME;
+      row.commit();
+    });
+    // キズミーの次回点検区（21〜22列目に書き込み）
+    tomorrowKizumiSet.forEach(areaName => {
+      const rowIdx = AREA_ROW_MAP[areaName];
+      if (!rowIdx) return;
+      const row = newSheet.getRow(rowIdx);
+      row.getCell(21).value = "○";
+      row.getCell(22).value = TANTO_NAME;
       row.commit();
     });
 
